@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const Player = require('./models/player');
 
 mongoose
-  .connect('mongodb://localhost:27017/votingApp')
-  .then(() => console.log('MongoDB Connected'))
-  .catch((err) => console.log(err));
+  .connect(
+    'mongodb+srv://admin:MySecurePass123@voting-cluster.ycajzdq.mongodb.net/votingApp?retryWrites=true&w=majority&appName=voting-cluster'
+  )
+  .then(() => console.log('Connected to Atlas!'))
+  .catch((err) => console.log('Connection error:', err));
 
 const seedPlayers = async () => {
   await Player.deleteMany({}); // optional: clear existing

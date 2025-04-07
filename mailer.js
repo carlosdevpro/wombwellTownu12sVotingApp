@@ -5,15 +5,14 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
-    // pass: 'uivcpjdhnzzwstke', // ✅ no dashes or quotes when used programmatically
   },
 });
 
 module.exports.sendPasswordReset = async (email, token) => {
-  const resetURL = `http://localhost:3000/reset/${token}`;
+  const resetURL = `https://votingapp-9eoi.onrender.com/reset/${token}`;
 
   const mailOptions = {
-    from: '"AuthApp" <carlos.wood1@icloud.com>',
+    from: `"AuthApp" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Password Reset Request',
     html: `
