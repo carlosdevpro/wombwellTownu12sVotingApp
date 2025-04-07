@@ -1,0 +1,12 @@
+# Ignore dependencies
+node_modules/
+
+# Ignore environment variables (if you ever use them)
+.env
+
+# Optional: lock file
+package-lock.json
+
+# OS-specific stuff (optional)
+.DS_Store
+Thumbs.db

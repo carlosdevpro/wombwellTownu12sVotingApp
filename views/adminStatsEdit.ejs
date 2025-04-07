@@ -1,0 +1,61 @@
+<%- include('partials/header') %>
+
+<div class="container mt-4">
+  <h2 class="text-center mb-4">Update Player Stats (Admin)</h2>
+
+  <% if (messages.success) { %>
+  <div class="alert alert-success text-center"><%= messages.success[0] %></div>
+  <% } %>
+
+  <form action="/admin/stats-edit" method="POST">
+    <table class="table table-bordered table-hover text-center align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Name</th>
+          <th>Goals</th>
+          <th>Assists</th>
+          <th>MOTM Wins</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% players.forEach(player => { %>
+        <tr>
+          <td><%= player.firstName %> <%= player.lastName %></td>
+          <td>
+            <input
+              type="number"
+              name="goals[<%= player._id %>]"
+              class="form-control"
+              value="<%= player.goals %>"
+              min="0"
+            />
+          </td>
+          <td>
+            <input
+              type="number"
+              name="assists[<%= player._id %>]"
+              class="form-control"
+              value="<%= player.assists %>"
+              min="0"
+            />
+          </td>
+          <td>
+            <input
+              type="number"
+              name="motmWins[<%= player._id %>]"
+              class="form-control"
+              value="<%= player.motmWins %>"
+              min="0"
+            />
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <div class="text-center">
+      <button class="btn btn-primary">💾 Save Updates</button>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

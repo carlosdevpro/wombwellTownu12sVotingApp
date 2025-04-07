@@ -1,0 +1,32 @@
+</div> <!-- Close container -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Hide flash message after 3s
+  setTimeout(() => {
+    const flash = document.getElementById('flash-message');
+    if (flash) flash.style.display = 'none';
+  }, 3000);
+
+  // Spinner transition
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ DOM loaded - running spinner hide logic');
+
+    const spinner = document.getElementById('loading-spinner');
+    const content = document.getElementById('main-content');
+
+    if (spinner && content) {
+      setTimeout(() => {
+        spinner.style.display = 'none';
+        content.style.display = 'block';
+        console.log('✅ Spinner hidden, content shown');
+      }, 1500);
+    } else {
+      console.warn('❌ Spinner or content not found in DOM');
+    }
+  });
+</script>
+
+</body>
+</html>

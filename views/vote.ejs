@@ -1,0 +1,60 @@
+<%- include('partials/header') %>
+
+<div class="container mt-3">
+  <% if (messages.success) { %>
+  <div id="flash-message" class="alert alert-success" role="alert">
+    <%= messages.success[0] %>
+  </div>
+  <% } %> <% if (messages.error) { %>
+  <div id="flash-message" class="alert alert-danger" role="alert">
+    <%= messages.error[0] %>
+  </div>
+  <% } %>
+
+  <h2 class="text-center mb-4">Vote for Man of the Match</h2>
+
+  <% if (user.hasVoted) { %>
+  <div class="alert alert-info text-center">
+    ✅ You have already voted. Thanks for your submission!
+  </div>
+  <div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-primary">🏠 Back to Home</a>
+  </div>
+  <% } else { %>
+  <form action="/vote" method="POST">
+    <table class="table table-hover table-bordered text-center align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Position</th>
+          <th>Vote</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% players.forEach(player => { %>
+        <tr>
+          <td><%= player.firstName %></td>
+          <td><%= player.lastName %></td>
+          <td><%= player.position %></td>
+          <td>
+            <input
+              type="radio"
+              name="playerId"
+              value="<%= player._id %>"
+              required
+            />
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <div class="text-center">
+      <button class="btn btn-primary">Submit Vote</button>
+    </div>
+  </form>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

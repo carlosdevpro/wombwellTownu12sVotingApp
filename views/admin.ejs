@@ -1,0 +1,43 @@
+<%- include('partials/header') %>
+
+<div class="container mt-4">
+  <h2 class="text-center mb-4">🛠 Admin Dashboard</h2>
+
+  <% if (messages.error) { %>
+  <div class="alert alert-danger"><%= messages.error[0] %></div>
+  <% } %> <% if (messages.success) { %>
+  <div class="alert alert-success"><%= messages.success[0] %></div>
+  <% } %>
+
+  <table class="table table-bordered table-hover text-center align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Parent Name</th>
+        <th>Email</th>
+        <th>Linked Player</th>
+        <th>Position</th>
+        <th>Voted?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% users.forEach(user => { %>
+      <tr class="<%= user.hasVoted ? 'table-success' : 'table-warning' %>">
+        <td><%= user.firstName %> <%= user.lastName %></td>
+        <td><%= user.email %></td>
+        <td>
+          <%= user.linkedPlayer?.firstName || '—' %> <%=
+          user.linkedPlayer?.lastName || '' %>
+        </td>
+        <td><%= user.linkedPlayer?.position || '—' %></td>
+        <td><%= user.hasVoted ? '✅ Yes' : '❌ No' %></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-primary">🏠 Back to Home</a>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,102 @@
+<%- include('partials/header') %>
+
+<div class="container mt-5">
+  <h2 class="text-center mb-4">📊 All-Time Player Stats</h2>
+
+  <div class="row gy-4">
+    <!-- Goals Leaderboard -->
+    <div class="col-md-4">
+      <div class="card border-primary h-100">
+        <div class="card-header bg-primary text-white text-center">
+          🥅 Goals Leaderboard
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="text-start">Player</th>
+                <th class="text-center">Goals</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% goals.forEach((player, i) => { %>
+              <tr>
+                <td class="text-start">
+                  <% if (i === 0) { %> 🥇 <% } else if (i === 1) { %> 🥈 <% }
+                  else if (i === 2) { %> 🥉 <% } %> <%= player.firstName %> <%=
+                  player.lastName %>
+                </td>
+                <td class="text-center"><%= player.goals %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assists Leaderboard -->
+    <div class="col-md-4">
+      <div class="card border-success h-100">
+        <div class="card-header bg-success text-white text-center">
+          🎯 Assists Leaderboard
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="text-start">Player</th>
+                <th class="text-center">Assists</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% assists.forEach((player, i) => { %>
+              <tr>
+                <td class="text-start">
+                  <% if (i === 0) { %> 🥇 <% } else if (i === 1) { %> 🥈 <% }
+                  else if (i === 2) { %> 🥉 <% } %> <%= player.firstName %> <%=
+                  player.lastName %>
+                </td>
+                <td class="text-center"><%= player.assists %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOTM Wins Leaderboard -->
+    <div class="col-md-4">
+      <div class="card border-warning h-100">
+        <div class="card-header bg-warning text-dark text-center">
+          🌟 MOTM Wins Leaderboard
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="text-start">Player</th>
+                <th class="text-center">Wins</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% motmWins.forEach((player, i) => { %>
+              <tr>
+                <td class="text-start">
+                  <% if (i === 0) { %> 🥇 <% } else if (i === 1) { %> 🥈 <% }
+                  else if (i === 2) { %> 🥉 <% } %> <%= player.firstName %> <%=
+                  player.lastName %>
+                </td>
+                <td class="text-center"><%= player.motmWins %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

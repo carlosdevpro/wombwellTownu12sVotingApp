@@ -1,0 +1,85 @@
+<%- include('partials/header') %>
+
+<!-- Loading spinner -->
+<div
+  id="loading-spinner"
+  class="d-flex justify-content-center align-items-center"
+  style="height: 60vh"
+>
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<!-- Main content - hidden by default -->
+<div id="main-content" class="d-none">
+  <% if (messages.success) { %>
+  <div id="flash-message" class="alert alert-success" role="alert">
+    <%= messages.success[0] %>
+  </div>
+  <% } %> <% if (messages.error) { %>
+  <div id="flash-message" class="alert alert-danger" role="alert">
+    <%= messages.error[0] %>
+  </div>
+  <% } %>
+
+  <div class="container d-flex justify-content-center mt-4">
+    <div class="card p-4 shadow" style="max-width: 500px; width: 100%">
+      <div class="text-center">
+        <h2 class="mb-3">Welcome to the Home Page</h2>
+
+        <% if (user) { %>
+        <p class="lead">
+          Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>!
+        </p>
+
+        <% if (user.linkedPlayer) { %>
+        <p>
+          Linked to:
+          <strong>
+            <%= user.linkedPlayer.firstName %> <%= user.linkedPlayer.lastName %>
+          </strong>
+        </p>
+        <% } %>
+
+        <!-- Main User Buttons -->
+        <div class="d-grid gap-2 mt-4">
+          <a href="/vote" class="btn btn-warning"
+            >⚽ Vote for Man of the Match</a
+          >
+          <a href="/leaderboard" class="btn btn-success"
+            >🏅 Live Vote Leaderboard</a
+          >
+          <a href="/stats" class="btn btn-info text-white">📊 Player Stats</a>
+        </div>
+
+        <!-- Admin Buttons -->
+        <% if (user.isAdmin) { %>
+        <hr />
+        <div class="d-grid gap-2">
+          <a href="/admin" class="btn btn-dark">🛠 Admin Dashboard</a>
+          <a href="/admin/stats-edit" class="btn btn-outline-dark"
+            >✏️ Edit Player Stats</a
+          >
+        </div>
+        <% } %>
+
+        <!-- Logout Button -->
+        <hr />
+        <form action="/logout" method="POST" class="d-grid">
+          <button class="btn btn-outline-danger">Log Out</button>
+        </form>
+
+        <% } else { %>
+        <!-- Not Logged In -->
+        <div class="d-grid gap-2 mt-4">
+          <a href="/login" class="btn btn-primary">Login</a>
+          <a href="/register" class="btn btn-success">Register</a>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
