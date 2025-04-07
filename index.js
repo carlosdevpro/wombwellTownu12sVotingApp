@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
@@ -10,8 +11,10 @@ const crypto = require('crypto');
 const { sendPasswordReset } = require('./mailer');
 const Player = require('./models/player');
 
+console.log('Using MONGO_URI:', process.env.MONGO_URI);
+
 mongoose
-  .connect('mongodb://localhost:27017/votingApp')
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('MONGO CONNECTION OPEN!'))
   .catch((err) => console.log('MONGO CONNECTION ERROR:', err));
 
@@ -22,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({
-    secret: 'notagoodsecret',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
   })

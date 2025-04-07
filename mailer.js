@@ -3,8 +3,9 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   service: 'icloud',
   auth: {
-    user: 'carlos.wood1@icloud.com',
-    pass: 'uivcpjdhnzzwstke', // ✅ no dashes or quotes when used programmatically
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+    // pass: 'uivcpjdhnzzwstke', // ✅ no dashes or quotes when used programmatically
   },
 });
 
