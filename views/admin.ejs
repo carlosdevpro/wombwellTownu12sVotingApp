@@ -40,6 +40,7 @@
             <th>Mobile</th>
             <th>Linked Player</th>
             <th>Has Voted?</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -48,7 +49,6 @@
             <td><%= p.firstName %> <%= p.lastName %></td>
             <td><%= p.email %></td>
             <td><%= p.mobileNumber || 'N/A' %></td>
-
             <td>
               <% if (p.linkedPlayer) { %> <%= p.linkedPlayer.firstName %> <%=
               p.linkedPlayer.lastName %> <% } else { %>
@@ -56,6 +56,14 @@
               <% } %>
             </td>
             <td><%= p.hasVoted ? '✅' : '❌' %></td>
+            <td>
+              <%= p.isOnline ? '🟢 Online' : '🔴 Offline' %><br />
+              <% if (p.lastActive) { %>
+              <small>Last Active: <%= p.lastActive.toLocaleString() %></small>
+              <% } else { %>
+              <small><em>Last Active: Not recorded</em></small>
+              <% } %>
+            </td>
           </tr>
           <% }) %>
         </tbody>
@@ -73,6 +81,7 @@
             <th>Name</th>
             <th>Email</th>
             <th>Shirt Number</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -81,6 +90,14 @@
             <td><%= p.firstName %> <%= p.lastName %></td>
             <td><%= p.email %></td>
             <td><%= p.linkedPlayer?.shirtNumber || 'N/A' %></td>
+            <td>
+              <%= p.isOnline ? '🟢 Online' : '🔴 Offline' %><br />
+              <% if (p.lastActive) { %>
+              <small>Last Active: <%= p.lastActive.toLocaleString() %></small>
+              <% } else { %>
+              <small><em>Last Active: Not recorded</em></small>
+              <% } %>
+            </td>
           </tr>
           <% }) %>
         </tbody>

@@ -50,8 +50,20 @@ const userSchema = new mongoose.Schema({
       return !this.isPlayer && this.isNew;
     },
   },
+  lastActive: {
+    type: Date,
+    default: Date.now,
+  },
+  isOnline: {
+    type: Boolean,
+    default: false,
+  },
+  lastActive: {
+    type: Date,
+  },
 });
 
+// Login helper
 userSchema.statics.findAndValidate = async function (email, password) {
   const foundUser = await this.findOne({ email });
   if (!foundUser) return false;
@@ -59,6 +71,7 @@ userSchema.statics.findAndValidate = async function (email, password) {
   return isValid ? foundUser : false;
 };
 
+// Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);

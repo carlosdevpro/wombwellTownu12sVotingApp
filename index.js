@@ -19,12 +19,10 @@ mongoose
   .then(() => console.log('✅ MONGO CONNECTION OPEN!'))
   .catch((err) => console.log('❌ MONGO CONNECTION ERROR:', err));
 
-// Set up EJS and static views
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 
-// Session setup for user login tracking
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -33,17 +31,33 @@ app.use(
   })
 );
 
-// Flash messages middleware
 app.use(flash());
 
-// Middleware to pass user and messages to all templates
-app.use((req, res, next) => {
+// 🟢 Set res.locals + update isOnline & lastSeen
+app.use(async (req, res, next) => {
   res.locals.messages = req.flash();
-  res.locals.currentUser = req.session.user_id || null;
+  res.locals.currentUser = null;
+
+  if (req.session.user_id) {
+    try {
+      const user = await User.findById(req.session.user_id);
+      if (user) {
+        const now = new Date();
+        user.lastSeen = now;
+        user.isOnline = true;
+        await user.save();
+
+        res.locals.currentUser = user;
+      }
+    } catch (err) {
+      console.error('❌ Failed to update user activity:', err);
+    }
+  }
+
   next();
 });
 
-// Middleware for protecting routes
+// 🛡 Route protection
 const requireLogin = (req, res, next) => {
   if (!req.session.user_id) return res.redirect('/login');
   next();
@@ -58,7 +72,7 @@ const requireAdmin = async (req, res, next) => {
   next();
 };
 
-// Routes
+// 🌐 Homepage
 app.get('/', async (req, res) => {
   let user = null;
   if (req.session.user_id) {
@@ -67,56 +81,42 @@ app.get('/', async (req, res) => {
   res.render('home', { user });
 });
 
-// Main register chooser (parent or player)
-app.get('/register', (req, res) => {
-  res.render('register');
-});
+// 📝 Registration pages
+app.get('/register', (req, res) => res.render('register'));
 
-// Parent registration page
 app.get('/register/parent', async (req, res) => {
   const players = await Player.find();
   const users = await User.find().populate('linkedPlayer');
+
   const playerCounts = {};
   users.forEach((user) => {
     const id = user.linkedPlayer?._id?.toString();
     if (id) playerCounts[id] = (playerCounts[id] || 0) + 1;
   });
+
   const availablePlayers = players.filter((p) => {
     const count = playerCounts[p._id.toString()] || 0;
     return count < 2;
   });
+
   res.render('registerParent', { players: availablePlayers });
 });
 
-// Player registration page
 app.get('/register/player', async (req, res) => {
-  try {
-    const allPlayers = await Player.find().sort({ firstName: 1 });
+  const allPlayers = await Player.find().sort({ firstName: 1 });
+  const registeredUsers = await User.find({ isPlayer: true }, 'linkedPlayer');
+  const usedIds = registeredUsers.map((u) => u.linkedPlayer.toString());
 
-    // Get all users who are players and extract their linkedPlayer IDs
-    const registeredUsers = await User.find({ isPlayer: true }, 'linkedPlayer');
-    const usedPlayerIds = registeredUsers.map((user) =>
-      user.linkedPlayer.toString()
-    );
-
-    // Filter players to only include those NOT already registered
-    const availablePlayers = allPlayers.filter(
-      (p) => !usedPlayerIds.includes(p._id.toString())
-    );
-
-    res.render('registerPlayer', { players: availablePlayers });
-  } catch (err) {
-    console.error('❌ Error loading player registration:', err);
-    req.flash('error', 'Could not load player list.');
-    res.redirect('/');
-  }
+  const availablePlayers = allPlayers.filter(
+    (p) => !usedIds.includes(p._id.toString())
+  );
+  res.render('registerPlayer', { players: availablePlayers });
 });
 
-// POST route for parent registration
+// ✅ Register routes
 app.post('/register/parent', async (req, res) => {
   const { email, password, firstName, lastName, linkedPlayer, mobileNumber } =
     req.body;
-
   try {
     const user = new User({
       email,
@@ -127,240 +127,116 @@ app.post('/register/parent', async (req, res) => {
       mobileNumber,
       isParent: true,
     });
-
     await user.save();
     req.session.user_id = user._id;
-    req.flash('success', 'Parent account created successfully!');
+    req.flash('success', 'Parent registered!');
     res.redirect('/');
   } catch (err) {
-    if (err.code === 11000 && err.keyValue?.email) {
-      // Mongo duplicate key error (email already exists)
-      req.flash('error', 'That email address is already registered.');
-    } else {
-      console.error('❌ Parent registration error:', err);
-      req.flash('error', 'Failed to register parent. Please try again.');
-    }
+    console.error(err);
+    req.flash('error', 'Email already in use or error occurred.');
     res.redirect('/register/parent');
   }
 });
 
-// POST route for player registration
 app.post('/register/player', async (req, res) => {
   const { email, password, linkedPlayer, shirtNumber } = req.body;
+  const player = await Player.findById(linkedPlayer);
 
-  try {
-    const player = await Player.findById(linkedPlayer);
-
-    if (!player || player.shirtNumber !== parseInt(shirtNumber)) {
-      req.flash('error', 'Invalid player or shirt number.');
-      return res.redirect('/register/player');
-    }
-
-    // ✅ Only block registration if a PLAYER user already exists for this linked player
-    const existingPlayerUser = await User.findOne({
-      linkedPlayer,
-      isPlayer: true,
-    });
-    if (existingPlayerUser) {
-      req.flash('error', 'This player already has a player account.');
-      return res.redirect('/register/player');
-    }
-
-    const user = new User({
-      email,
-      password,
-      linkedPlayer,
-      isPlayer: true,
-      firstName: player.firstName,
-      lastName: player.lastName,
-    });
-
-    await user.save();
-    req.session.user_id = user._id;
-    req.flash('success', 'Player account created successfully!');
-    res.redirect('/');
-  } catch (err) {
-    console.error('❌ Error registering player:', err);
-    req.flash('error', 'Something went wrong. Please try again.');
-    res.redirect('/register/player');
+  if (!player || player.shirtNumber !== parseInt(shirtNumber)) {
+    req.flash('error', 'Invalid player or shirt number.');
+    return res.redirect('/register/player');
   }
-});
 
-// Admin dashboard
-app.get('/admin', requireLogin, requireAdmin, async (req, res) => {
-  try {
-    const parents = await User.find({ isParent: true }).populate(
-      'linkedPlayer'
-    );
-    const players = await User.find({ isPlayer: true }).populate(
-      'linkedPlayer'
-    );
-    res.render('admin', { parents, players });
-  } catch (err) {
-    console.error('❌ Admin dashboard error:', err);
-    req.flash('error', 'Failed to load admin dashboard.');
-    res.redirect('/');
+  const existing = await User.findOne({ linkedPlayer, isPlayer: true });
+  if (existing) {
+    req.flash('error', 'Player already registered.');
+    return res.redirect('/register/player');
   }
-});
 
-// Edit player stats
-app.get('/admin/stats-edit', requireLogin, requireAdmin, async (req, res) => {
-  const players = await Player.find();
-  res.render('adminStatsEdit', { players });
-});
-
-// 🔄 Reset all parent votes
-app.post('/admin/reset-votes', requireLogin, requireAdmin, async (req, res) => {
-  try {
-    // Reset all parents' voting status
-    await User.updateMany({ isParent: true }, { hasVoted: false });
-
-    // Reset all players' vote counts
-    await Player.updateMany({}, { votes: 0 });
-
-    req.flash(
-      'success',
-      '✅ All parent votes and leaderboard results have been reset.'
-    );
-    res.redirect('/admin');
-  } catch (err) {
-    console.error('❌ Reset error:', err);
-    req.flash('error', 'Something went wrong while resetting.');
-    res.redirect('/admin');
-  }
-});
-
-// Save edited player stats
-app.post('/admin/stats-edit', requireLogin, requireAdmin, async (req, res) => {
-  const { goals = {}, assists = {}, motmWins = {} } = req.body;
-  try {
-    const updates = Object.keys(goals).map((playerId) => {
-      return Player.findByIdAndUpdate(playerId, {
-        goals: parseInt(goals[playerId]) || 0,
-        assists: parseInt(assists[playerId]) || 0,
-        motmWins: parseInt(motmWins[playerId]) || 0,
-      });
-    });
-    await Promise.all(updates);
-    req.flash('success', '✅ Player stats successfully updated!');
-    res.redirect('/admin/stats-edit');
-  } catch (err) {
-    console.error('❌ Failed to update stats:', err);
-    req.flash('error', 'Something went wrong while saving stats.');
-    res.redirect('/admin/stats-edit');
-  }
-});
-
-// Forgot password form
-app.get('/forgot', (req, res) => {
-  res.render('forgot');
-});
-
-// Password reset form
-app.get('/reset/:token', async (req, res) => {
-  const { token } = req.params;
-  const user = await User.findOne({
-    resetPasswordToken: token,
-    resetPasswordExpires: { $gt: Date.now() },
+  const user = new User({
+    email,
+    password,
+    linkedPlayer,
+    isPlayer: true,
+    firstName: player.firstName,
+    lastName: player.lastName,
   });
-  if (!user) {
-    req.flash('error', 'Password reset link is invalid or has expired.');
-    return res.redirect('/forgot');
-  }
-  res.render('reset', { token });
-});
 
-// Process forgot password
-app.post('/forgot', async (req, res) => {
-  const { email } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
-    req.flash('error', 'No account with that email.');
-    return res.redirect('/forgot');
-  }
-  const token = crypto.randomBytes(32).toString('hex');
-  user.resetPasswordToken = token;
-  user.resetPasswordExpires = Date.now() + 3600000;
-  await user.save();
-  try {
-    await sendPasswordReset(user.email, token);
-    req.flash('success', 'Password reset link sent to your email.');
-  } catch (err) {
-    console.error('❌ EMAIL ERROR:', err);
-    req.flash('error', 'Failed to send password reset email.');
-  }
-  res.redirect('/login');
-});
-
-// Reset password submission
-app.post('/reset/:token', async (req, res) => {
-  const { token } = req.params;
-  const { password } = req.body;
-  const user = await User.findOne({
-    resetPasswordToken: token,
-    resetPasswordExpires: { $gt: Date.now() },
-  });
-  if (!user) {
-    req.flash('error', 'Invalid or expired reset token.');
-    return res.redirect('/forgot');
-  }
-  user.password = password;
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
   await user.save();
   req.session.user_id = user._id;
-  req.flash('success', 'Password has been reset!');
+  req.flash('success', 'Player account created!');
   res.redirect('/');
 });
 
-// Login page and process
-app.get('/login', (req, res) => res.render('login'));
-// Player login page
-app.get('/login/player', (req, res) => {
-  res.render('playerLogin');
+// 🛠 Admin dashboard
+app.get('/admin', requireLogin, requireAdmin, async (req, res) => {
+  const parents = await User.find({ isParent: true }).populate('linkedPlayer');
+  const players = await User.find({ isPlayer: true }).populate('linkedPlayer');
+
+  const now = new Date();
+  const threshold = 2 * 60 * 1000;
+
+  const withStatus = (users) =>
+    users.map((u) => {
+      const isOnline = u.lastSeen && now - u.lastSeen < threshold;
+      return { ...u.toObject(), isOnline };
+    });
+
+  res.render('admin', {
+    parents: withStatus(parents),
+    players: withStatus(players),
+  });
 });
-// Handle player login form
+
+// ✅ Logout
+app.post('/logout', async (req, res) => {
+  const user = await User.findById(req.session.user_id);
+  if (user) {
+    user.isOnline = false;
+    user.lastActive = new Date();
+    await user.save();
+  }
+  req.session.user_id = null;
+  req.flash('success', 'Logged out.');
+  res.redirect('/login');
+});
+
+// ✅ Login
+app.get('/login', (req, res) => res.render('login'));
+app.get('/login/player', (req, res) => res.render('playerLogin'));
+
 app.post('/login/player', async (req, res) => {
   const { email, password } = req.body;
-  const player = await User.findOne({ email, isPlayer: true });
+  const user = await User.findOne({ email, isPlayer: true });
 
-  if (!player) {
-    req.flash('error', 'Player not found or not registered as a player.');
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    req.flash('error', 'Invalid credentials.');
     return res.redirect('/login/player');
   }
 
-  const validPassword = await bcrypt.compare(password, player.password);
+  req.session.user_id = user._id;
+  user.isOnline = true;
+  user.lastSeen = new Date();
+  await user.save();
 
-  if (!validPassword) {
-    req.flash('error', 'Invalid password.');
-    return res.redirect('/login/player');
-  }
-
-  req.session.user_id = player._id;
-  req.flash('success', 'Welcome, Player!');
-  res.redirect('/'); // ✅ sends to home page now
+  res.redirect('/');
 });
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  const user = await User.findAndValidate(email, password);
 
-  try {
-    const user = await User.findAndValidate(email, password);
-
-    if (!user) {
-      req.flash('error', 'Invalid email or password.');
-      return res.redirect('/login');
-    }
-
-    req.session.user_id = user._id;
-
-    // 👇 Remove isPlayer redirect — everyone goes to home
-    res.redirect('/');
-  } catch (err) {
-    console.error('❌ Login error:', err);
-    req.flash('error', 'Something went wrong.');
-    res.redirect('/login');
+  if (!user) {
+    req.flash('error', 'Invalid credentials.');
+    return res.redirect('/login');
   }
+
+  req.session.user_id = user._id;
+  user.isOnline = true;
+  user.lastSeen = new Date();
+  await user.save();
+
+  res.redirect('/');
 });
 
 // Voting routes
@@ -416,12 +292,19 @@ app.get('/stats', requireLogin, async (req, res) => {
 });
 
 // Logout
-app.post('/logout', (req, res) => {
+app.post('/logout', async (req, res) => {
+  const user = await User.findById(req.session.user_id);
+  if (user) {
+    user.isOnline = false;
+    user.lastActive = new Date();
+    await user.save();
+  }
   req.session.user_id = null;
   req.flash('success', 'Logged out successfully.');
   res.redirect('/login');
 });
 
+// Admin: Send SMS Vote Reminders
 app.post(
   '/admin/send-reminders',
   requireLogin,
