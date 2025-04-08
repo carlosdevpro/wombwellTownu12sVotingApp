@@ -3,23 +3,29 @@
 <div class="container mt-5">
   <h1 class="text-center mb-4">🛠 Admin Dashboard</h1>
 
-  <!-- Action Buttons (Stacked for mobile) -->
-  <div class="d-grid gap-2 mb-4">
-    <a href="/" class="btn btn-outline-primary">🏠 Back to Home</a>
+  <!-- Action Buttons (Compact & Stacked) -->
+  <div class="d-flex flex-column align-items-center gap-2 mb-4">
+    <div>
+      <a href="/" class="btn btn-outline-primary btn-sm">🏠 Back to Home</a>
+    </div>
 
-    <form action="/admin/send-reminders" method="POST">
-      <button type="submit" class="btn btn-info text-white">
-        📱 Send SMS Vote Reminders
+    <div>
+      <form action="/admin/send-reminders" method="POST">
+        <button type="submit" class="btn btn-info text-white btn-sm">
+          📱 Send SMS Vote Reminders
+        </button>
+      </form>
+    </div>
+
+    <div>
+      <button
+        class="btn btn-danger btn-sm"
+        data-bs-toggle="modal"
+        data-bs-target="#resetVotesModal"
+      >
+        🔄 Reset All Votes
       </button>
-    </form>
-
-    <button
-      class="btn btn-danger"
-      data-bs-toggle="modal"
-      data-bs-target="#resetVotesModal"
-    >
-      🔄 Reset All Votes
-    </button>
+    </div>
   </div>
 
   <!-- Parents Table -->
