@@ -1,81 +1,15 @@
+<!-- views/register.ejs -->
 <%- include('partials/header') %>
 
-<div class="row justify-content-center mt-4">
-  <div class="col-md-6">
-    <div class="card shadow p-4">
-      <h2 class="mb-4 text-center">Register</h2>
-
-      <form action="/register" method="POST">
-        <div class="mb-3">
-          <label for="firstName" class="form-label">First Name</label>
-          <input
-            type="text"
-            class="form-control"
-            id="firstName"
-            name="firstName"
-            required
-          />
-        </div>
-
-        <div class="mb-3">
-          <label for="lastName" class="form-label">Last Name</label>
-          <input
-            type="text"
-            class="form-control"
-            id="lastName"
-            name="lastName"
-            required
-          />
-        </div>
-
-        <div class="mb-3">
-          <label for="email" class="form-label">Email</label>
-          <input
-            type="email"
-            class="form-control"
-            id="email"
-            name="email"
-            required
-          />
-        </div>
-
-        <div class="mb-3">
-          <label for="password" class="form-label">Password</label>
-          <input
-            type="password"
-            class="form-control"
-            id="password"
-            name="password"
-            required
-          />
-        </div>
-
-        <div class="mb-3">
-          <label for="linkedPlayer" class="form-label"
-            >Select Your Child (Player)</label
-          >
-          <select
-            class="form-select"
-            id="linkedPlayer"
-            name="linkedPlayer"
-            required
-          >
-            <% players.forEach(player => { %>
-            <option value="<%= player._id %>">
-              <%= player.firstName %> <%= player.lastName %> (<%=
-              player.position %>)
-            </option>
-            <% }) %>
-          </select>
-        </div>
-
-        <button class="btn btn-success w-100">Register</button>
-      </form>
-
-      <p class="mt-3 text-center">
-        Already have an account? <a href="/login">Login</a>
-      </p>
-    </div>
+<div class="container text-center mt-5">
+  <h2>Who are you registering as?</h2>
+  <div class="d-flex justify-content-center gap-4 mt-4">
+    <a href="/register/parent" class="btn btn-primary btn-lg"
+      >👨‍👩‍👧‍👦 I am a Parent</a
+    >
+    <a href="/register/player" class="btn btn-success btn-lg"
+      >⚽ I am a Player</a
+    >
   </div>
 </div>
 

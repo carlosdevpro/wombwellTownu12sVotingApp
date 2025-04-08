@@ -12,7 +12,7 @@ module.exports.sendPasswordReset = async (email, token) => {
   const resetURL = `https://votingapp-9eoi.onrender.com/reset/${token}`;
 
   const mailOptions = {
-    from: `"AuthApp" <${process.env.EMAIL_USER}>`,
+    from: `"VotingApp" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Password Reset Request',
     html: `

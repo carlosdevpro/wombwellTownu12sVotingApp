@@ -1,0 +1,48 @@
+<%- include('partials/header') %>
+
+<div class="container mt-5">
+  <h2 class="text-center mb-4">🎮 Player Login</h2>
+
+  <% if (messages.success) { %>
+  <div class="alert alert-success text-center"><%= messages.success[0] %></div>
+  <% } %> <% if (messages.error) { %>
+  <div class="alert alert-danger text-center"><%= messages.error[0] %></div>
+  <% } %>
+
+  <form
+    action="/login/player"
+    method="POST"
+    class="mx-auto"
+    style="max-width: 400px"
+  >
+    <div class="mb-3">
+      <label for="email" class="form-label">Email address</label>
+      <input
+        type="email"
+        class="form-control"
+        id="email"
+        name="email"
+        placeholder="Enter your email"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input
+        type="password"
+        class="form-control"
+        id="password"
+        name="password"
+        placeholder="Enter your password"
+        required
+      />
+    </div>
+
+    <div class="d-grid">
+      <button type="submit" class="btn btn-primary">Login</button>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/footer') %>

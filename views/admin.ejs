@@ -1,42 +1,131 @@
 <%- include('partials/header') %>
 
-<div class="container mt-4">
-  <h2 class="text-center mb-4">🛠 Admin Dashboard</h2>
+<div class="container mt-5">
+  <h1 class="text-center mb-4">🛠 Admin Dashboard</h1>
 
-  <% if (messages.error) { %>
-  <div class="alert alert-danger"><%= messages.error[0] %></div>
-  <% } %> <% if (messages.success) { %>
-  <div class="alert alert-success"><%= messages.success[0] %></div>
+  <% if (messages.success) { %>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <%= messages.success[0] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  <% } %> <% if (messages.error) { %>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <%= messages.error[0] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
   <% } %>
 
-  <table class="table table-bordered table-hover text-center align-middle">
-    <thead class="table-dark">
-      <tr>
-        <th>Parent Name</th>
-        <th>Email</th>
-        <th>Linked Player</th>
-        <th>Position</th>
-        <th>Voted?</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% users.forEach(user => { %>
-      <tr class="<%= user.hasVoted ? 'table-success' : 'table-warning' %>">
-        <td><%= user.firstName %> <%= user.lastName %></td>
-        <td><%= user.email %></td>
-        <td>
-          <%= user.linkedPlayer?.firstName || '—' %> <%=
-          user.linkedPlayer?.lastName || '' %>
-        </td>
-        <td><%= user.linkedPlayer?.position || '—' %></td>
-        <td><%= user.hasVoted ? '✅ Yes' : '❌ No' %></td>
-      </tr>
-      <% }) %>
-    </tbody>
-  </table>
-
-  <div class="text-center mt-4">
+  <form method="POST" action="/admin/send-reminders" class="ms-2">
+    <button class="btn btn-success">📱 Send SMS Vote Reminders</button>
+  </form>
+  <!-- Reset votes toggle -->
+  <div class="d-grid gap-2 mb-4" style="max-width: 200px; margin-left: auto">
     <a href="/" class="btn btn-outline-primary">🏠 Back to Home</a>
+
+    <button
+      class="btn btn-danger"
+      data-bs-toggle="modal"
+      data-bs-target="#resetVotesModal"
+    >
+      🔄 Reset All Votes
+    </button>
+  </div>
+
+  <!-- Parents Table -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">👨‍👩‍👧‍👦 Registered Parents</div>
+    <div class="card-body table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Mobile</th>
+            <th>Linked Player</th>
+            <th>Has Voted?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% parents.forEach(p => { %>
+          <tr>
+            <td><%= p.firstName %> <%= p.lastName %></td>
+            <td><%= p.email %></td>
+            <td><%= p.mobileNumber || 'N/A' %></td>
+
+            <td>
+              <% if (p.linkedPlayer) { %> <%= p.linkedPlayer.firstName %> <%=
+              p.linkedPlayer.lastName %> <% } else { %>
+              <em>Not linked</em>
+              <% } %>
+            </td>
+            <td><%= p.hasVoted ? '✅' : '❌' %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Players Table -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">⚽ Registered Players</div>
+    <div class="card-body table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Shirt Number</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% players.forEach(p => { %>
+          <tr>
+            <td><%= p.firstName %> <%= p.lastName %></td>
+            <td><%= p.email %></td>
+            <td><%= p.linkedPlayer?.shirtNumber || 'N/A' %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Modal -->
+<div
+  class="modal fade"
+  id="resetVotesModal"
+  tabindex="-1"
+  aria-labelledby="resetVotesLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="POST" action="/admin/reset-votes">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resetVotesLabel">Reset All Votes</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to reset the vote status for all parents?
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-danger">Reset Votes</button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 

@@ -11,7 +11,7 @@
   </div>
 </div>
 
-<!-- Main content - hidden by default -->
+<!-- Main content -->
 <div id="main-content" class="d-none">
   <% if (messages.success) { %>
   <div id="flash-message" class="alert alert-success" role="alert">
@@ -26,14 +26,14 @@
   <div class="container d-flex justify-content-center mt-4">
     <div class="card p-4 shadow" style="max-width: 500px; width: 100%">
       <div class="text-center">
-        <h2 class="mb-3">⚽ Welcome to Frickley u16s ⚽</h2>
+        <h2 class="mb-3">Welcome to Frickley u16s ⚽</h2>
 
         <% if (user) { %>
         <p class="lead">
           Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>!
         </p>
 
-        <% if (user.linkedPlayer) { %>
+        <% if (!user.isPlayer && user.linkedPlayer) { %>
         <p>
           Linked to:
           <strong>
@@ -43,14 +43,17 @@
         <% } %>
 
         <!-- Main User Buttons -->
-        <div class="d-grid gap-2 mt-4">
+        <div class="d-grid gap-2 mt-4" style="max-width: 400px; margin: 0 auto">
+          <% if (user?.isPlayer) { %>
+          <a href="/stats" class="btn btn-info">📊 Player Stats</a>
+          <a href="/leaderboard" class="btn btn-success">🏅 Vote Leaderboard</a>
+          <% } else { %>
           <a href="/vote" class="btn btn-warning"
             >⚽ Vote for Man of the Match</a
           >
-          <a href="/leaderboard" class="btn btn-success"
-            >🏅 Live Vote Leaderboard</a
-          >
-          <a href="/stats" class="btn btn-info text-white">📊 Player Stats</a>
+          <a href="/stats" class="btn btn-info">📊 Player Stats</a>
+          <a href="/leaderboard" class="btn btn-success">🏅 Vote Leaderboard</a>
+          <% } %>
         </div>
 
         <!-- Admin Buttons -->
@@ -69,7 +72,6 @@
         <form action="/logout" method="POST" class="d-grid">
           <button class="btn btn-outline-danger">Log Out</button>
         </form>
-
         <% } else { %>
         <!-- Not Logged In -->
         <div class="d-grid gap-2 mt-4">

@@ -35,6 +35,21 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isPlayer: {
+    type: Boolean,
+    default: false,
+  },
+  isParent: {
+    type: Boolean,
+    default: false,
+  },
+  mobileNumber: {
+    type: String,
+    required: function () {
+      // Only require mobile number when creating a NEW document
+      return !this.isPlayer && this.isNew;
+    },
+  },
 });
 
 userSchema.statics.findAndValidate = async function (email, password) {
