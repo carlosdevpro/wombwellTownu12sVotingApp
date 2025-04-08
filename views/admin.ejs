@@ -3,24 +3,15 @@
 <div class="container mt-5">
   <h1 class="text-center mb-4">🛠 Admin Dashboard</h1>
 
-  <% if (messages.success) { %>
-  <div class="alert alert-success alert-dismissible fade show" role="alert">
-    <%= messages.success[0] %>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-  <% } %> <% if (messages.error) { %>
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <%= messages.error[0] %>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-  <% } %>
-
-  <form method="POST" action="/admin/send-reminders" class="ms-2">
-    <button class="btn btn-success">📱 Send SMS Vote Reminders</button>
-  </form>
-  <!-- Reset votes toggle -->
-  <div class="d-grid gap-2 mb-4" style="max-width: 200px; margin-left: auto">
+  <!-- Action Buttons (Stacked for mobile) -->
+  <div class="d-grid gap-2 mb-4">
     <a href="/" class="btn btn-outline-primary">🏠 Back to Home</a>
+
+    <form action="/admin/send-reminders" method="POST">
+      <button type="submit" class="btn btn-info text-white">
+        📱 Send SMS Vote Reminders
+      </button>
+    </form>
 
     <button
       class="btn btn-danger"
