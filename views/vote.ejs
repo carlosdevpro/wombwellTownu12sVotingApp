@@ -1,60 +1,50 @@
 <%- include('partials/header') %>
 
-<div class="container mt-3">
+<div class="container mt-5">
+  <h1 class="text-center mb-4">🗳 Vote for Player of the Match</h1>
+
   <% if (messages.success) { %>
-  <div id="flash-message" class="alert alert-success" role="alert">
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
     <%= messages.success[0] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </div>
   <% } %> <% if (messages.error) { %>
-  <div id="flash-message" class="alert alert-danger" role="alert">
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
     <%= messages.error[0] %>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </div>
-  <% } %>
-
-  <h2 class="text-center mb-4">Vote for Man of the Match</h2>
-
-  <% if (user.hasVoted) { %>
-  <div class="alert alert-info text-center">
-    ✅ You have already voted. Thanks for your submission!
-  </div>
-  <div class="text-center mt-4">
-    <a href="/" class="btn btn-outline-primary">🏠 Back to Home</a>
-  </div>
+  <% } %> <% if (user.hasVoted) { %>
+  <div class="alert alert-info text-center">✅ You have already voted!</div>
   <% } else { %>
-  <form action="/vote" method="POST">
-    <table class="table table-hover table-bordered text-center align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th>First Name</th>
-          <th>Last Name</th>
-          <th>Position</th>
-          <th>Vote</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% players.forEach(player => { %>
-        <tr>
-          <td><%= player.firstName %></td>
-          <td><%= player.lastName %></td>
-          <td><%= player.position %></td>
-          <td>
-            <input
-              type="radio"
+  <form method="POST" action="/vote">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      <% players.forEach(player => { %>
+      <div class="col">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <h5 class="card-title">
+              <%= player.firstName %> <%= player.lastName %>
+            </h5>
+            <p>Shirt #<%= player.shirtNumber %></p>
+            <button
+              type="submit"
               name="playerId"
               value="<%= player._id %>"
-              required
-            />
-          </td>
-        </tr>
-        <% }) %>
-      </tbody>
-    </table>
-
-    <div class="text-center">
-      <button class="btn btn-primary">Submit Vote</button>
+              class="btn btn-success w-100"
+            >
+              Vote 🗳️
+            </button>
+          </div>
+        </div>
+      </div>
+      <% }); %>
     </div>
   </form>
   <% } %>
+
+  <div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-primary">🏠 Back to Home</a>
+  </div>
 </div>
 
 <%- include('partials/footer') %>

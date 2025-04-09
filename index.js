@@ -31,6 +31,8 @@ app.use(
   })
 );
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(flash());
 
 // 🟢 Set res.locals + update isOnline & lastSeen
@@ -86,7 +88,7 @@ app.get('/register', (req, res) => res.render('register'));
 
 app.get('/register/parent', async (req, res) => {
   const players = await Player.find();
-  const users = await User.find().populate('linkedPlayer');
+  const users = await User.find({ isParent: true }).populate('linkedPlayer');
 
   const playerCounts = {};
   users.forEach((user) => {

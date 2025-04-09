@@ -26,7 +26,10 @@
   <div class="container d-flex justify-content-center mt-4">
     <div class="card p-4 shadow" style="max-width: 500px; width: 100%">
       <div class="text-center">
-        <h2 class="mb-3">Welcome to Frickley u16s ⚽</h2>
+        <h2 class="mb-3">
+          Welcome to <br />
+          Wombwell Town u12s ⚽
+        </h2>
 
         <% if (user) { %>
         <p class="lead">
@@ -61,7 +64,7 @@
         <hr />
         <div class="d-grid gap-2">
           <a href="/admin" class="btn btn-dark">🛠 Admin Dashboard</a>
-          <a href="/admin/stats-edit" class="btn btn-outline-dark"
+          <a href="/admin/stats-edit" class="btn btn-dark"
             >✏️ Edit Player Stats</a
           >
         </div>
@@ -70,12 +73,12 @@
         <!-- Logout Button -->
         <hr />
         <form action="/logout" method="POST" class="d-grid">
-          <button class="btn btn-outline-danger">Log Out</button>
+          <button class="btn logout-btn btn-m ms-2">Log Out</button>
         </form>
         <% } else { %>
         <!-- Not Logged In -->
         <div class="d-grid gap-2 mt-4">
-          <a href="/login" class="btn btn-primary">Login</a>
+          <a href="/login" class="btn btn-danger btn-sm ms-2">Login</a>
           <a href="/register" class="btn btn-success">Register</a>
         </div>
         <% } %>

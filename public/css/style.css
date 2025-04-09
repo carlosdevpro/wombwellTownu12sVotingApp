@@ -1,0 +1,81 @@
+body {
+  background-color: #fdfdfd; /* black */
+  color: #fff; /* white text */
+}
+
+.navbar-brand {
+  color: #dc3545 !important; /* Bootstrap's red */
+  font-weight: bold;
+}
+
+.btn-primary,
+.btn-outline-primary {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.btn-primary:hover,
+.btn-outline-primary:hover {
+  background-color: #a71d2a;
+  border-color: #a71d2a;
+}
+
+.card,
+.table {
+  background-color: #747474;
+  color: #fff;
+}
+
+.table-dark th,
+.table-dark td {
+  background-color: #212529;
+}
+
+a {
+  color: #dc3545;
+}
+
+a:hover {
+  color: #ff5e6c;
+}
+.container,
+.card,
+.table,
+.modal-content {
+  border: 1px solid #fff;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.page-center {
+  display: flex;
+  justify-content: center; /* horizontal center */
+  align-items: center; /* vertical center */
+  min-height: 100vh; /* full viewport height */
+  padding: 1rem;
+}
+.logout-btn {
+  background-color: #dc3545; /* solid red */
+  color: white;
+  border: 1px solid #dc3545;
+}
+
+.logout-btn:hover {
+  background-color: #a71d2a; /* darker red on hover */
+  border-color: #a71d2a;
+}
+/* Form text colors for registration pages */
+.container label,
+.container input,
+.container select,
+.container option,
+.container .form-control,
+.container .form-select {
+  color: #000 !important;
+  background-color: #fff !important;
+}
+/* Make H2 headings black inside registration containers */
+.container h2 {
+  color: #000 !important;
+}
