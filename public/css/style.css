@@ -1,81 +1,159 @@
 body {
-  background-color: #fdfdfd; /* black */
-  color: #fff; /* white text */
-}
-
-.navbar-brand {
-  color: #dc3545 !important; /* Bootstrap's red */
-  font-weight: bold;
-}
-
-.btn-primary,
-.btn-outline-primary {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: white;
-}
-
-.btn-primary:hover,
-.btn-outline-primary:hover {
-  background-color: #a71d2a;
-  border-color: #a71d2a;
-}
-
-.card,
-.table {
-  background-color: #747474;
+  background-color: #121212;
+  font-family: 'Poppins', sans-serif;
   color: #fff;
+  padding-top: 80px;
 }
 
-.table-dark th,
-.table-dark td {
-  background-color: #212529;
+a,
+.nav-link {
+  color: #00bfff;
+  text-decoration: none;
+  transition: 0.3s ease;
 }
 
-a {
-  color: #dc3545;
+a:hover,
+.nav-link:hover {
+  color: #ffffff;
+  text-shadow: 0 0 5px #00bfff;
 }
 
-a:hover {
-  color: #ff5e6c;
+.navbar {
+  background: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-.container,
-.card,
-.table,
-.modal-content {
-  border: 1px solid #fff;
+
+.neon {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #00bfff;
+  text-shadow: 0 0 5px #00bfff;
+}
+
+.btn-neon-sm {
+  background-color: #00bfff;
+  color: #121212;
+  border: none;
+  padding: 0.4rem 1rem;
   border-radius: 8px;
-  padding: 1rem;
+  font-weight: bold;
+  transition: 0.3s;
 }
 
-.page-center {
-  display: flex;
-  justify-content: center; /* horizontal center */
-  align-items: center; /* vertical center */
-  min-height: 100vh; /* full viewport height */
-  padding: 1rem;
-}
-.logout-btn {
-  background-color: #dc3545; /* solid red */
+.btn-neon-sm:hover {
+  background-color: #008fcc;
   color: white;
-  border: 1px solid #dc3545;
 }
 
-.logout-btn:hover {
-  background-color: #a71d2a; /* darker red on hover */
-  border-color: #a71d2a;
+.card,
+.container,
+.form-control,
+.form-select {
+  background-color: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  border-radius: 12px;
+  color: white;
 }
-/* Form text colors for registration pages */
-.container label,
-.container input,
-.container select,
-.container option,
-.container .form-control,
-.container .form-select {
-  color: #000 !important;
-  background-color: #fff !important;
+
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease;
 }
-/* Make H2 headings black inside registration containers */
-.container h2 {
-  color: #000 !important;
+
+.card:hover {
+  transform: scale(1.02);
+}
+
+/* Galaxy Login Page Styles */
+body {
+  background: url('../images/galaxy-bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.login-card {
+  background: rgba(0, 0, 0, 0.8);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0, 191, 255, 0.3);
+  max-width: 400px;
+  margin: 10vh auto;
+  color: white;
+}
+
+.form-control {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid #00bfff;
+  border-radius: 0;
+  color: white;
+}
+
+.form-control:focus {
+  box-shadow: none;
+  border-bottom: 1px solid #00ffff;
+}
+
+.btn-login {
+  background-color: #00bfff;
+  border: none;
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #121212;
+}
+
+.btn-login:hover {
+  background-color: #009acd;
+  color: white;
+}
+
+.form-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-label i {
+  color: #00bfff;
+}
+.galaxy-navbar {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 191, 255, 0.2);
+}
+
+.navbar-brand.neon {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #00bfff;
+  text-shadow: 0 0 6px #00bfff;
+}
+
+.nav-link {
+  color: #eee;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #00bfff;
+  text-shadow: 0 0 4px #00bfff;
+}
+.container {
+  background: transparent !important;
+}
+.btn-neon-sm {
+  background-color: #00bfff;
+  color: #000;
+  border: none;
+  font-weight: bold;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.btn-neon-sm:hover {
+  background-color: #009acd;
+  color: #fff;
 }

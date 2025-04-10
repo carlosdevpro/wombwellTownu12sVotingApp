@@ -14,4 +14,12 @@ function sendVoteReminder(phone, playerName) {
   });
 }
 
-module.exports = { sendVoteReminder };
+function sendFinalReminder(phone, playerName) {
+  return client.messages.create({
+    body: `📢 Final reminder: Please don’t forget to vote for ${playerName} as Man of the Match today!`,
+    from: process.env.TWILIO_PHONE_NUMBER,
+    to: phone,
+  });
+}
+
+module.exports = { sendVoteReminder, sendFinalReminder };

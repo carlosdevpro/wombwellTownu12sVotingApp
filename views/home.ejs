@@ -1,90 +1,96 @@
 <%- include('partials/header') %>
 
-<!-- Loading spinner -->
+<!-- Neon Home Page with Spinner and Cards -->
 <div
   id="loading-spinner"
   class="d-flex justify-content-center align-items-center"
   style="height: 60vh"
 >
-  <div class="spinner-border text-primary" role="status">
+  <div class="spinner-border text-info" role="status">
     <span class="visually-hidden">Loading...</span>
   </div>
 </div>
 
-<!-- Main content -->
 <div id="main-content" class="d-none">
   <% if (messages.success) { %>
-  <div id="flash-message" class="alert alert-success" role="alert">
+  <div id="flash-message" class="alert alert-success text-center">
     <%= messages.success[0] %>
   </div>
   <% } %> <% if (messages.error) { %>
-  <div id="flash-message" class="alert alert-danger" role="alert">
+  <div id="flash-message" class="alert alert-danger text-center">
     <%= messages.error[0] %>
   </div>
   <% } %>
 
   <div class="container d-flex justify-content-center mt-4">
-    <div class="card p-4 shadow" style="max-width: 500px; width: 100%">
-      <div class="text-center">
-        <h2 class="mb-3">
-          Welcome to <br />
-          Wombwell Town u12s ⚽
-        </h2>
+    <div
+      class="card p-4 shadow text-center homepage-card"
+      style="max-width: 500px; width: 100%"
+    >
+      <% if (user) { %>
+      <p class="lead">
+        Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>!
+      </p>
 
-        <% if (user) { %>
-        <p class="lead">
-          Hello, <strong><%= user.firstName %> <%= user.lastName %></strong>!
-        </p>
+      <% if (!user.isPlayer && user.linkedPlayer) { %>
+      <p>
+        Linked to:
+        <strong
+          ><%= user.linkedPlayer.firstName %> <%= user.linkedPlayer.lastName
+          %></strong
+        >
+      </p>
+      <% } %>
 
-        <% if (!user.isPlayer && user.linkedPlayer) { %>
-        <p>
-          Linked to:
-          <strong>
-            <%= user.linkedPlayer.firstName %> <%= user.linkedPlayer.lastName %>
-          </strong>
-        </p>
-        <% } %>
-
-        <!-- Main User Buttons -->
-        <div class="d-grid gap-2 mt-4" style="max-width: 400px; margin: 0 auto">
-          <% if (user?.isPlayer) { %>
-          <a href="/stats" class="btn btn-info">📊 Player Stats</a>
-          <a href="/leaderboard" class="btn btn-success">🏅 Vote Leaderboard</a>
-          <% } else { %>
-          <a href="/vote" class="btn btn-warning"
-            >⚽ Vote for Man of the Match</a
-          >
-          <a href="/stats" class="btn btn-info">📊 Player Stats</a>
-          <a href="/leaderboard" class="btn btn-success">🏅 Vote Leaderboard</a>
-          <% } %>
-        </div>
-
-        <!-- Admin Buttons -->
-        <% if (user.isAdmin) { %>
-        <hr />
-        <div class="d-grid gap-2">
-          <a href="/admin" class="btn btn-dark">🛠 Admin Dashboard</a>
-          <a href="/admin/stats-edit" class="btn btn-dark"
-            >✏️ Edit Player Stats</a
-          >
-        </div>
-        <% } %>
-
-        <!-- Logout Button -->
-        <hr />
-        <form action="/logout" method="POST" class="d-grid">
-          <button class="btn logout-btn btn-m ms-2">Log Out</button>
-        </form>
+      <!-- Main User Buttons -->
+      <div class="d-grid gap-2 mt-4" style="max-width: 400px; margin: 0 auto">
+        <% if (user?.isPlayer) { %>
+        <a href="/stats" class="btn btn-neon-sm">📊 Player Stats</a>
+        <a href="/leaderboard" class="btn btn-neon-sm">🏅 Vote Leaderboard</a>
         <% } else { %>
-        <!-- Not Logged In -->
-        <div class="d-grid gap-2 mt-4">
-          <a href="/login" class="btn btn-danger btn-sm ms-2">Login</a>
-          <a href="/register" class="btn btn-success">Register</a>
-        </div>
+        <a href="/vote" class="btn btn-neon-sm">⚽ Vote for Man of the Match</a>
+        <a href="/stats" class="btn btn-neon-sm">📊 Player Stats</a>
+        <a href="/leaderboard" class="btn btn-neon-sm">🏅 Vote Leaderboard</a>
         <% } %>
       </div>
+
+      <!-- Admin Buttons -->
+      <% if (user.isAdmin) { %>
+      <hr />
+      <div class="d-grid gap-2">
+        <a href="/admin" class="btn btn-outline-secondary">🛠 Admin Dashboard</a>
+        <a href="/admin/stats-edit" class="btn btn-outline-secondary"
+          >✏️ Edit Player Stats</a
+        >
+      </div>
+      <% } %>
+
+      <!-- Logout Button -->
+      <hr />
+      <form action="/logout" method="POST" class="d-grid">
+        <button class="btn btn-danger">Log Out</button>
+      </form>
+
+      <% } else { %>
+      <!-- Not Logged In -->
+      <div class="d-grid gap-2 mt-4">
+        <a href="/login" class="btn btn-neon-sm">🔐 Login</a>
+        <a href="/register" class="btn btn-outline-secondary">📝 Register</a>
+      </div>
+      <% } %>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const spinner = document.getElementById('loading-spinner');
+    const mainContent = document.getElementById('main-content');
+    setTimeout(() => {
+      spinner.classList.add('d-none');
+      mainContent.classList.remove('d-none');
+    }, 1000);
+  });
+</script>
 
 <%- include('partials/footer') %>

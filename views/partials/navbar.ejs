@@ -1,5 +1,19 @@
-<nav class="navbar navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand text-danger fw-bold" href="/">Wombwell Town U12s</a>
+<nav class="navbar glassy-navbar fixed-top">
+  <div
+    class="container-fluid d-flex justify-content-between align-items-center"
+  >
+    <a class="navbar-brand neon" href="/">⚽ Wombwell Town</a>
+    <ul class="nav">
+      <% if (currentUser) { %>
+      <li class="nav-item"><a class="nav-link" href="/">🏠 Home</a></li>
+      <li class="nav-item">
+        <form action="/logout" method="POST" class="d-inline">
+          <button class="btn btn-neon-sm">Logout</button>
+        </form>
+      </li>
+      <% } else { %>
+      <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+      <% } %>
+    </ul>
   </div>
 </nav>

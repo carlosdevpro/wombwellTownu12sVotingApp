@@ -1,36 +1,39 @@
 <%- include('partials/header') %>
 
-<div class="container mt-4">
-  <div class="mb-4 d-flex justify-content-start">
-    <a href="/" class="btn btn-outline-primary">🏠 Back to Home</a>
-  </div>
-  <h2 class="text-center mb-4">🏆 Leaderboard – Man of the Match Votes</h2>
+<div class="page-center">
+  <div class="container">
+    <div class="card shadow p-4">
+      <h2 class="text-center mb-4">🏅 Leaderboard – Man of the Match Votes</h2>
 
-  <table class="table table-bordered table-hover text-center align-middle">
-    <thead class="table-dark">
-      <tr>
-        <th>Rank</th>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Position</th>
-        <th>Total Votes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% players.forEach((player, index) => { %>
-      <tr>
-        <td><%= index + 1 %></td>
-        <td><%= player.firstName %></td>
-        <td><%= player.lastName %></td>
-        <td><%= player.position %></td>
-        <td><%= player.votes %></td>
-      </tr>
-      <% }) %>
-    </tbody>
-  </table>
+      <div class="table-responsive">
+        <table
+          class="table table-bordered table-hover text-center align-middle"
+        >
+          <thead class="table-dark">
+            <tr>
+              <th>Rank</th>
+              <th>Full Name</th>
+              <th>Position</th>
+              <th>Total Votes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% players.forEach((player, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= player.firstName %> <%= player.lastName %></td>
+              <td><%= player.position %></td>
+              <td><%= player.votes %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
 
-  <div class="text-center mt-4">
-    <a href="/" class="btn btn-outline-secondary">⬅ Back to Home</a>
+      <div class="text-center mt-4">
+        <a href="/" class="btn btn-neon-sm">⬅ Back to Home</a>
+      </div>
+    </div>
   </div>
 </div>
 

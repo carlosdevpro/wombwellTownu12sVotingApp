@@ -10,7 +10,7 @@ const flash = require('connect-flash');
 const path = require('path');
 const crypto = require('crypto');
 const { sendPasswordReset } = require('./mailer');
-const { sendVoteReminder } = require('./sms');
+const { sendVoteReminder, sendFinalReminder } = require('./sms');
 
 // Connect to MongoDB
 console.log('Using MONGO_URI:', process.env.MONGO_URI);
@@ -116,9 +116,16 @@ app.get('/register/player', async (req, res) => {
 });
 
 // ✅ Register routes
+function formatUKNumber(number) {
+  return number.replace(/^0/, '+44').replace(/\s+/g, '');
+}
+
 app.post('/register/parent', async (req, res) => {
-  const { email, password, firstName, lastName, linkedPlayer, mobileNumber } =
+  let { email, password, firstName, lastName, linkedPlayer, mobileNumber } =
     req.body;
+
+  mobileNumber = formatUKNumber(mobileNumber);
+
   try {
     const user = new User({
       email,
@@ -129,6 +136,7 @@ app.post('/register/parent', async (req, res) => {
       mobileNumber,
       isParent: true,
     });
+
     await user.save();
     req.session.user_id = user._id;
     req.flash('success', 'Parent registered!');
@@ -255,29 +263,54 @@ app.get('/vote', requireLogin, async (req, res) => {
 });
 
 app.post('/vote', requireLogin, async (req, res) => {
-  const user = await User.findById(req.session.user_id);
-
-  if (!user || user.isPlayer) {
-    req.flash('error', 'Players are not allowed to vote.');
-    return res.redirect('/');
-  }
-
-  if (user.hasVoted) {
-    req.flash('error', 'You have already voted!');
-    return res.redirect('/vote');
-  }
-
   try {
+    const user = await User.findById(req.session.user_id);
+
+    // Prevent players from voting
+    if (!user || user.isPlayer) {
+      req.flash('error', 'Players are not allowed to vote.');
+      return res.redirect('/');
+    }
+
+    // If already voted, just redirect — NO flash
+    if (user.hasVoted) {
+      return res.redirect('/vote');
+    }
+
+    // Record vote
     await Player.findByIdAndUpdate(req.body.playerId, { $inc: { votes: 1 } });
     user.hasVoted = true;
     await user.save();
+
+    // Show only success
     req.flash('success', '✅ Your vote has been submitted.');
+    return res.redirect('/vote');
   } catch (err) {
     console.error('❌ Vote submission error:', err);
     req.flash('error', 'Something went wrong. Please try again.');
+    return res.redirect('/vote');
+  }
+});
+
+// Reset votes
+app.post('/admin/reset-votes', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    // ✅ Reset vote status for all parents
+    await User.updateMany({ isParent: true }, { $set: { hasVoted: false } });
+
+    // ✅ Reset all player vote counts to 0
+    await Player.updateMany({}, { $set: { votes: 0 } });
+
+    req.flash(
+      'success',
+      '✅ All parent votes and leaderboard totals have been reset!'
+    );
+  } catch (err) {
+    console.error('❌ Failed to reset votes:', err);
+    req.flash('error', 'Something went wrong while resetting votes.');
   }
 
-  res.redirect('/vote');
+  res.redirect('/admin');
 });
 
 // Leaderboards
@@ -293,6 +326,70 @@ app.get('/stats', requireLogin, async (req, res) => {
   res.render('stats', { goals, assists, motmWins });
 });
 
+// Edit Stats
+app.get('/admin/stats-edit', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const players = await Player.find().sort({ firstName: 1 });
+    res.render('adminStatsEdit', { players });
+  } catch (err) {
+    console.error('❌ Failed to load player stats for editing:', err);
+    req.flash('error', 'Something went wrong loading the stats page.');
+    res.redirect('/admin');
+  }
+});
+
+app.post('/admin/stats-edit', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const { stats } = req.body;
+
+    for (const playerId in stats) {
+      const { goals, assists, motmWins } = stats[playerId];
+
+      await Player.findByIdAndUpdate(playerId, {
+        goals: parseInt(goals),
+        assists: parseInt(assists),
+        motmWins: parseInt(motmWins),
+      });
+    }
+
+    req.flash('success', '✅ Player stats updated!');
+  } catch (err) {
+    console.error('❌ Failed to update player stats:', err);
+    req.flash('error', 'Something went wrong while updating stats.');
+  }
+
+  res.redirect('/admin/stats-edit');
+});
+
+app.post('/vote', requireLogin, async (req, res) => {
+  const user = await User.findById(req.session.user_id);
+
+  // Block players
+  if (!user || user.isPlayer) {
+    req.flash('error', 'Players are not allowed to vote.');
+    return res.redirect('/');
+  }
+
+  // If already voted, stop here — no other logic should run
+  if (user.hasVoted) {
+    req.flash('error', 'You have already voted!');
+    return res.redirect('/vote');
+  }
+
+  // 🟢 This block only runs once per user
+  try {
+    await Player.findByIdAndUpdate(req.body.playerId, { $inc: { votes: 1 } });
+    user.hasVoted = true;
+    await user.save();
+    req.flash('success', '✅ Your vote has been submitted.');
+    return res.redirect('/vote');
+  } catch (err) {
+    console.error('❌ Vote submission error:', err);
+    req.flash('error', 'Something went wrong. Please try again.');
+    return res.redirect('/vote');
+  }
+});
+
 // Logout
 app.post('/logout', async (req, res) => {
   const user = await User.findById(req.session.user_id);
@@ -306,34 +403,43 @@ app.post('/logout', async (req, res) => {
   res.redirect('/login');
 });
 
-// Admin: Send SMS Vote Reminders
+// Admin: Send SMS Vote Reminders to ALL Parents
+// Admin: Send SMS to Individual Parent
 app.post(
-  '/admin/send-reminders',
+  '/admin/send-reminder/:id',
   requireLogin,
   requireAdmin,
   async (req, res) => {
     try {
-      const parents = await User.find({
-        isParent: true,
-        hasVoted: false,
-      }).populate('linkedPlayer');
+      const parent = await User.findById(req.params.id).populate(
+        'linkedPlayer'
+      );
 
-      const promises = parents.map((parent) => {
-        if (!parent.mobileNumber || !parent.linkedPlayer) return null;
-        return sendVoteReminder(
-          parent.mobileNumber,
-          parent.linkedPlayer.firstName
-        );
-      });
+      if (!parent || !parent.mobileNumber || !parent.linkedPlayer) {
+        req.flash('error', 'Parent or player not found.');
+        return res.redirect('/admin');
+      }
 
-      await Promise.all(promises);
+      const formatUKNumber = (number) =>
+        number.replace(/^0/, '+44').replace(/\s+/g, '');
+
+      const to = formatUKNumber(parent.mobileNumber);
+      const from = process.env.TWILIO_PHONE_NUMBER;
+
+      if (to === from) {
+        req.flash('error', 'Cannot send SMS to your own number.');
+        return res.redirect('/admin');
+      }
+
+      await sendFinalReminder(to, parent.linkedPlayer.firstName);
+
       req.flash(
         'success',
-        '📤 SMS reminders sent to all parents who haven’t voted!'
+        `📩 Final reminder sent to ${parent.firstName} ${parent.lastName}`
       );
     } catch (err) {
-      console.error('❌ Failed to send SMS reminders:', err);
-      req.flash('error', 'Something went wrong while sending SMS.');
+      console.error('❌ Failed to send individual SMS reminder:', err);
+      req.flash('error', 'Something went wrong sending the SMS.');
     }
 
     res.redirect('/admin');

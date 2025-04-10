@@ -1,112 +1,102 @@
 <%- include('partials/header') %>
 
-<div class="container mt-5">
-  <h1 class="text-center mb-4">🛠 Admin Dashboard</h1>
+<!-- Neon Admin Dashboard Page -->
+<div class="page-center">
+  <div class="container">
+    <div class="card shadow p-4">
+      <h2 class="text-center mb-4">🛠 Admin Dashboard</h2>
 
-  <!-- Action Buttons (Compact & Stacked) -->
-  <div class="d-flex flex-column align-items-center gap-2 mb-4">
-    <div>
-      <a href="/" class="btn btn-outline-primary btn-sm">🏠 Back to Home</a>
-    </div>
+      <% if (messages.success) { %>
+      <div class="alert alert-success text-center">
+        <%= messages.success[0] %>
+      </div>
+      <% } %> <% if (messages.error) { %>
+      <div class="alert alert-danger text-center"><%= messages.error[0] %></div>
+      <% } %>
 
-    <div>
-      <form action="/admin/send-reminders" method="POST">
-        <button type="submit" class="btn btn-info text-white btn-sm">
-          📱 Send SMS Vote Reminders
+      <div class="d-grid gap-3 mb-4" style="max-width: 300px; margin: 0 auto">
+        <a href="/" class="btn btn-outline-primary w-100">🏠 Back to Home</a>
+        <form action="/admin/send-reminders" method="POST" class="w-100">
+          <button type="submit" class="btn btn-info text-white w-100">
+            📱 Send SMS Vote Reminders
+          </button>
+        </form>
+        <button
+          class="btn btn-danger w-100"
+          data-bs-toggle="modal"
+          data-bs-target="#resetVotesModal"
+        >
+          🔄 Reset All Votes
         </button>
-      </form>
-    </div>
+      </div>
 
-    <div>
-      <button
-        class="btn btn-danger btn-sm"
-        data-bs-toggle="modal"
-        data-bs-target="#resetVotesModal"
-      >
-        🔄 Reset All Votes
-      </button>
-    </div>
-  </div>
-
-  <!-- Parents Table -->
-  <div class="card shadow mb-4">
-    <div class="card-header bg-primary text-white">👨‍👩‍👧‍👦 Registered Parents</div>
-    <div class="card-body table-responsive">
-      <table class="table table-hover">
-        <thead class="table-light">
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Mobile</th>
-            <th>Linked Player</th>
-            <th>Has Voted?</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
+      <!-- Registered Parents Section -->
+      <div class="bg-secondary bg-opacity-25 p-3 rounded mb-4">
+        <h4 class="text-white bg-primary text-center p-2 rounded">
+          👨‍👩‍👧 Registered Parents
+        </h4>
+        <div class="row g-3">
           <% parents.forEach(p => { %>
-          <tr>
-            <td><%= p.firstName %> <%= p.lastName %></td>
-            <td><%= p.email %></td>
-            <td><%= p.mobileNumber || 'N/A' %></td>
-            <td>
-              <% if (p.linkedPlayer) { %> <%= p.linkedPlayer.firstName %> <%=
-              p.linkedPlayer.lastName %> <% } else { %>
-              <em>Not linked</em>
-              <% } %>
-            </td>
-            <td><%= p.hasVoted ? '✅' : '❌' %></td>
-            <td>
-              <%= p.isOnline ? '🟢 Online' : '🔴 Offline' %><br />
-              <% if (p.lastActive) { %>
-              <small>Last Active: <%= p.lastActive.toLocaleString() %></small>
-              <% } else { %>
-              <small><em>Last Active: Not recorded</em></small>
-              <% } %>
-            </td>
-          </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
-  </div>
 
-  <!-- Players Table -->
-  <div class="card shadow mb-4">
-    <div class="card-header bg-success text-white">⚽ Registered Players</div>
-    <div class="card-body table-responsive">
-      <table class="table table-hover">
-        <thead class="table-light">
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Shirt Number</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% players.forEach(p => { %>
-          <tr>
-            <td><%= p.firstName %> <%= p.lastName %></td>
-            <td><%= p.email %></td>
-            <td><%= p.linkedPlayer?.shirtNumber || 'N/A' %></td>
-            <td>
-              <%= p.isOnline ? '🟢 Online' : '🔴 Offline' %><br />
+          <div class="col-md-6 col-lg-4">
+            <div class="border p-3 rounded bg-dark text-white h-100">
+              <p><strong><%= p.firstName %> <%= p.lastName %></strong></p>
+              <p>Email: <%= p.email %></p>
+              <p>Mobile: <%= p.mobileNumber || 'N/A' %></p>
+              <p>
+                Linked Player: <%= p.linkedPlayer ? `${p.linkedPlayer.firstName}
+                ${p.linkedPlayer.lastName}` : 'None' %>
+              </p>
+              <p>Voted: <%= p.hasVoted ? '✅' : '❌' %></p>
+              <p>Status: <%= p.isOnline ? '🟢 Online' : '🔴 Offline' %></p>
               <% if (p.lastActive) { %>
               <small>Last Active: <%= p.lastActive.toLocaleString() %></small>
               <% } else { %>
               <small><em>Last Active: Not recorded</em></small>
               <% } %>
-            </td>
-          </tr>
+              <form
+                action="/admin/send-reminder/<%= p._id %>"
+                method="POST"
+                class="mt-2"
+              >
+                <button class="btn btn-outline-info btn-sm w-100">
+                  📩 Send SMS Reminder
+                </button>
+              </form>
+            </div>
+          </div>
           <% }) %>
-        </tbody>
-      </table>
+        </div>
+      </div>
+
+      <!-- Registered Players Section -->
+      <div class="bg-secondary bg-opacity-25 p-3 rounded">
+        <h4 class="text-white bg-success text-center p-2 rounded">
+          ⚽ Registered Players
+        </h4>
+        <div class="row g-3">
+          <% players.forEach(p => { %>
+          <div class="col-md-6 col-lg-4">
+            <div class="border p-3 rounded bg-dark text-white h-100">
+              <p><strong><%= p.firstName %> <%= p.lastName %></strong></p>
+              <p>Email: <%= p.email %></p>
+              <p>Shirt #: <%= p.linkedPlayer?.shirtNumber || 'N/A' %></p>
+              <p>Status: <%= p.isOnline ? '🟢 Online' : '🔴 Offline' %></p>
+              <% if (p.lastActive) { %>
+              <small>Last Active: <%= p.lastActive.toLocaleString() %></small>
+              <% } else { %>
+              <small><em>Last Active: Not recorded</em></small>
+              <% } %>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Reset Modal -->
+<!-- Reset Votes Modal -->
 <div
   class="modal fade"
   id="resetVotesModal"
@@ -126,7 +116,8 @@
           ></button>
         </div>
         <div class="modal-body">
-          Are you sure you want to reset the vote status for all parents?
+          Are you sure you want to reset the vote status for all parents and
+          leaderboard totals?
         </div>
         <div class="modal-footer">
           <button
