@@ -35,9 +35,11 @@
     <% if (!user.hasVoted) { %>
     <form method="POST" action="/vote">
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        <% players.forEach(player => { %>
+        <% players.forEach((player, index) => { %>
         <div class="col">
-          <div class="card shadow-sm h-100 text-center p-3">
+          <div
+            class="card shadow-sm h-100 text-center p-3 <%= index % 2 === 0 ? 'card-alt-a' : 'card-alt-b' %>"
+          >
             <h5 class="card-title neon">
               <%= player.firstName %> <%= player.lastName %>
             </h5>

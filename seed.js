@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const mongoose = require('mongoose');
 const Player = require('./models/player');
 
@@ -27,7 +29,7 @@ const players = [
   },
   {
     firstName: 'Logan',
-    lastName: 'Heppinstall',
+    lastName: 'Hepplestall',
     position: 'MID',
     shirtNumber: 11,
   },

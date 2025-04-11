@@ -51,7 +51,7 @@ a:hover,
 .form-control,
 .form-select {
   background-color: #1e1e1e;
-  border: 1px solid #2e2e2e;
+  /* border: 1px solid #2e2e2e; */
   border-radius: 12px;
   color: white;
 }
@@ -156,4 +156,11 @@ body {
 .btn-neon-sm:hover {
   background-color: #009acd;
   color: #fff;
+}
+.card-alt-a {
+  background-color: #1e1e1e;
+}
+
+.card-alt-b {
+  background-color: #414141;
 }

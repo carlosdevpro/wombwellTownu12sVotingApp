@@ -361,6 +361,41 @@ app.post('/admin/stats-edit', requireLogin, requireAdmin, async (req, res) => {
   res.redirect('/admin/stats-edit');
 });
 
+/// 🔐 Admin-only route with secret code to reset all player stats
+app.get('/admin/reset-stats', requireLogin, requireAdmin, (req, res) => {
+  res.render('adminResetStats');
+});
+
+app.post(
+  '/admin/reset-player-stats',
+  requireLogin,
+  requireAdmin,
+  async (req, res) => {
+    const { secretCode } = req.body;
+
+    if (secretCode !== process.env.STAT_RESET_SECRET) {
+      req.flash('error', 'Incorrect secret key.');
+      return res.redirect('/admin');
+    }
+
+    console.log('ENV SECRET:', process.env.STAT_RESET_SECRET);
+    console.log('USER SUBMITTED:', req.body.secretCode);
+
+    try {
+      await Player.updateMany(
+        {},
+        { $set: { goals: 0, assists: 0, motmWins: 0 } }
+      );
+      req.flash('success', '✅ All player stats have been reset.');
+    } catch (err) {
+      console.error('❌ Failed to reset stats:', err);
+      req.flash('error', 'Something went wrong while resetting stats.');
+    }
+
+    res.redirect('/admin/reset-stats');
+  }
+);
+
 app.post('/vote', requireLogin, async (req, res) => {
   const user = await User.findById(req.session.user_id);
 
