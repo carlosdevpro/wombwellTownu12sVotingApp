@@ -2,68 +2,73 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
-const User = require('./models/user');
-const Player = require('./models/player');
+const path = require('path');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const flash = require('connect-flash');
-const path = require('path');
+const methodOverride = require('method-override');
 const crypto = require('crypto');
+
+const User = require('./models/user');
+const Player = require('./models/player');
+const Match = require('./models/match');
 const { sendPasswordReset } = require('./mailer');
 const { sendVoteReminder, sendFinalReminder } = require('./sms');
 
-// Connect to MongoDB
+// 🟢 Connect to MongoDB
 console.log('Using MONGO_URI:', process.env.MONGO_URI);
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MONGO CONNECTION OPEN!'))
   .catch((err) => console.log('❌ MONGO CONNECTION ERROR:', err));
 
+// ✅ Set up view engine and middleware
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
+app.use(express.static(path.join(__dirname, 'public')));
 
+// ✅ Session setup
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false,
   })
 );
 
-app.use(express.static(path.join(__dirname, 'public')));
-
+// ✅ Flash (must come after session)
 app.use(flash());
 
-// 🟢 Set res.locals + update isOnline & lastSeen
+// ✅ Load currentUser and messages into res.locals
 app.use(async (req, res, next) => {
-  res.locals.messages = req.flash();
-  res.locals.currentUser = null;
-
   if (req.session.user_id) {
     try {
       const user = await User.findById(req.session.user_id);
-      if (user) {
-        const now = new Date();
-        user.lastSeen = now;
-        user.isOnline = true;
-        await user.save();
-
-        res.locals.currentUser = user;
-      }
+      res.locals.currentUser = user;
+      console.log('✅ Current user:', user.email);
     } catch (err) {
-      console.error('❌ Failed to update user activity:', err);
+      console.error('❌ Error loading user:', err);
+      res.locals.currentUser = null;
     }
+  } else {
+    res.locals.currentUser = null;
+    console.log('✅ Current user: undefined');
   }
 
+  res.locals.messages = req.flash();
   next();
 });
 
 // 🛡 Route protection
-const requireLogin = (req, res, next) => {
-  if (!req.session.user_id) return res.redirect('/login');
+function requireLogin(req, res, next) {
+  if (!req.session.user_id) {
+    req.flash('error', 'You must be logged in.');
+    return res.redirect('/login');
+  }
   next();
-};
+}
 
 const requireAdmin = async (req, res, next) => {
   const user = await User.findById(req.session.user_id);
@@ -234,19 +239,44 @@ app.post('/login/player', async (req, res) => {
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findAndValidate(email, password);
+  const user = await User.findOne({ email });
 
   if (!user) {
-    req.flash('error', 'Invalid credentials.');
+    req.flash('error', 'User not found.');
     return res.redirect('/login');
   }
 
+  const isValid = await bcrypt.compare(password, user.password);
+  if (!isValid) {
+    req.flash('error', 'Incorrect password.');
+    return res.redirect('/login');
+  }
+
+  // ✅ Set session user_id
   req.session.user_id = user._id;
+
+  // ✅ Set online status
   user.isOnline = true;
-  user.lastSeen = new Date();
+  user.lastActive = new Date();
   await user.save();
 
-  res.redirect('/');
+  console.log('✅ Logged in as:', {
+    _id: user._id,
+    email: user.email,
+    isAdmin: user.isAdmin,
+  });
+  console.log('➡️ Session object:', req.session);
+
+  // 🧠 Important: Save session before redirecting
+  req.session.save((err) => {
+    if (err) {
+      console.error('❌ Session save error:', err);
+      req.flash('error', 'Session error. Please try again.');
+      return res.redirect('/login');
+    }
+
+    res.redirect(user.isAdmin ? '/admin' : '/');
+  });
 });
 
 // Voting routes
@@ -480,6 +510,138 @@ app.post(
     res.redirect('/admin');
   }
 );
+
+// ✅ POST route to save a new match
+app.post(
+  '/admin/create-match',
+  requireLogin,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { homeTeam, awayTeam, homeScore, awayScore } = req.body;
+
+      // Parse scorers JSON properly
+      let scorers = [];
+      if (req.body.scorers) {
+        try {
+          scorers = JSON.parse(req.body.scorers);
+        } catch (e) {
+          console.error('❌ Invalid scorers JSON:', e);
+          req.flash('error', 'Scorers data is invalid.');
+          return res.redirect('/admin/create-match');
+        }
+      }
+
+      const match = new Match({
+        homeTeam,
+        awayTeam,
+        homeScore: parseInt(homeScore),
+        awayScore: parseInt(awayScore),
+        scorers,
+        date: req.body.date || Date.now(),
+      });
+
+      await match.save();
+      req.flash('success', '✅ Match created successfully.');
+      res.redirect('/matches');
+    } catch (err) {
+      console.error('❌ Failed to save match:', err);
+      req.flash('error', 'Something went wrong saving the match.');
+      res.redirect('/admin/create-match');
+    }
+  }
+);
+
+// GET route to show the match creation form
+app.get('/admin/create-match', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const players = await Player.find({});
+    res.render('createMatch', { messages: req.flash(), players }); // 🔥 No 'matches' here
+  } catch (err) {
+    console.error('❌ Failed to load players:', err);
+    req.flash('error', 'Could not load players for match creation.');
+    res.redirect('/admin');
+  }
+});
+
+// Show all saved matches
+// ✅ GET route to view all matches
+app.get('/matches', async (req, res) => {
+  const matches = await Match.find().sort({ date: -1 });
+
+  console.log('✅ Current user:', res.locals.currentUser?.email);
+
+  res.render('matchResults', {
+    matches,
+    currentUser: res.locals.currentUser, // 👈 This is the key
+    messages: req.flash(),
+  });
+});
+
+// ✅ DELETE route for a single match
+app.delete(
+  '/admin/matches/:id',
+  requireLogin,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      await Match.findByIdAndDelete(req.params.id);
+      req.flash('success', 'Match deleted successfully.');
+    } catch (err) {
+      console.error('Failed to delete match:', err);
+      req.flash('error', 'Error deleting the match.');
+    }
+    res.redirect('/matches');
+  }
+);
+
+// ✅ GET route to render edit form
+app.get(
+  '/admin/matches/:id/edit',
+  requireLogin,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const match = await Match.findById(req.params.id);
+      const players = await Player.find({}); // ✅ Fetch players for dropdown
+
+      if (!match) throw new Error('Match not found');
+
+      res.render('editMatch', {
+        match,
+        players, // ✅ Pass players to the EJS view
+        messages: req.flash(),
+      });
+    } catch (err) {
+      console.error('❌ Failed to load match edit page:', err);
+      req.flash('error', 'Could not load match for editing.');
+      res.redirect('/matches');
+    }
+  }
+);
+
+// ✅ PUT route to update a match
+app.put('/admin/matches/:id', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const { homeTeam, awayTeam, homeScore, awayScore, scorers } = req.body;
+    const updatedScorers = scorers ? JSON.parse(scorers) : [];
+
+    await Match.findByIdAndUpdate(req.params.id, {
+      homeTeam,
+      awayTeam,
+      homeScore: parseInt(homeScore),
+      awayScore: parseInt(awayScore),
+      scorers: updatedScorers,
+    });
+
+    req.flash('success', 'Match updated successfully.');
+    res.redirect('/matches');
+  } catch (err) {
+    console.error('Failed to update match:', err);
+    req.flash('error', 'Error updating the match.');
+    res.redirect('/matches');
+  }
+});
 
 // Start server
 app.listen(3000, () => {

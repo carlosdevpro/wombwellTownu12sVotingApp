@@ -1,27 +1,7 @@
 <%- include('partials/header') %>
 
-<!-- Neon Home Page with Spinner and Cards -->
-<div
-  id="loading-spinner"
-  class="d-flex justify-content-center align-items-center"
-  style="height: 60vh"
->
-  <div class="spinner-border text-info" role="status">
-    <span class="visually-hidden">Loading...</span>
-  </div>
-</div>
-
-<div id="main-content" class="d-none">
-  <% if (messages.success) { %>
-  <div id="flash-message" class="alert alert-success text-center">
-    <%= messages.success[0] %>
-  </div>
-  <% } %> <% if (messages.error) { %>
-  <div id="flash-message" class="alert alert-danger text-center">
-    <%= messages.error[0] %>
-  </div>
-  <% } %>
-
+<!-- Neon Home Page with Match Results Button -->
+<div class="page-center">
   <div class="container d-flex justify-content-center mt-4">
     <div
       class="card p-4 shadow text-center homepage-card"
@@ -47,10 +27,12 @@
         <% if (user?.isPlayer) { %>
         <a href="/stats" class="btn btn-neon-sm">📊 Player Stats</a>
         <a href="/leaderboard" class="btn btn-neon-sm">🏅 Vote Leaderboard</a>
+        <a href="/matches" class="btn btn-neon-sm">📅 Match Results</a>
         <% } else { %>
         <a href="/vote" class="btn btn-neon-sm">⚽ Vote for Man of the Match</a>
-        <a href="/leaderboard" class="btn btn-neon-sm">🏅 Vote Leaderboard</a>
         <a href="/stats" class="btn btn-neon-sm">📊 Player Stats</a>
+        <a href="/leaderboard" class="btn btn-neon-sm">🏅 Vote Leaderboard</a>
+        <a href="/matches" class="btn btn-neon-sm">📅 Match Results</a>
         <% } %>
       </div>
 
@@ -62,6 +44,9 @@
         <a href="/admin/stats-edit" class="btn btn-outline-warning"
           >✏️ Edit Player Stats</a
         >
+        <a href="/admin/create-match" class="btn btn-outline-success"
+          >✍️ Create Match Result</a
+        >
       </div>
       <% } %>
 
@@ -70,27 +55,15 @@
       <form action="/logout" method="POST" class="d-grid">
         <button class="btn btn-danger">Log Out</button>
       </form>
-
       <% } else { %>
       <!-- Not Logged In -->
       <div class="d-grid gap-2 mt-4">
-        <a href="/login" class="btn btn-neon-sm">🔐 Login</a>
-        <a href="/register" class="btn btn-outline-secondary">📝 Register</a>
+        <a href="/login" class="btn btn-danger">🔐 Login</a>
+        <a href="/register" class="btn btn-success">📝 Register</a>
       </div>
       <% } %>
     </div>
   </div>
 </div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const spinner = document.getElementById('loading-spinner');
-    const mainContent = document.getElementById('main-content');
-    setTimeout(() => {
-      spinner.classList.add('d-none');
-      mainContent.classList.remove('d-none');
-    }, 1000);
-  });
-</script>
 
 <%- include('partials/footer') %>

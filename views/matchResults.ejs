@@ -1,0 +1,125 @@
+<%- include('partials/header') %> <% if (currentUser) { %>
+<!-- <p class="text-success text-center">
+  👤 Logged in as: <%= currentUser.email %> | Admin: <%= currentUser.isAdmin %>
+</p> -->
+<% } else { %>
+<!-- <p class="text-danger text-center">⚠️ No user logged in</p> -->
+<% } %>
+
+<div class="page-center">
+  <div class="container">
+    <h2 class="text-center mb-4">📅 Match Results</h2>
+
+    <% if (matches.length === 0) { %>
+    <div class="alert alert-info text-center">
+      No match results available yet.
+    </div>
+    <% } %>
+
+    <div class="row g-4 justify-content-center">
+      <% matches.forEach(match => { %>
+      <div class="col-md-6 col-lg-4">
+        <div class="card shadow bg-dark text-white h-100">
+          <div class="card-body">
+            <p class="text-center mb-2">
+              <%= new Date(match.date).toLocaleDateString('en-GB', { weekday:
+              'long', day: '2-digit', month: '2-digit', year: '2-digit' }) %>
+            </p>
+
+            <h5 class="card-title text-center">
+              <%= match.homeTeam %> <strong><%= match.homeScore %></strong> -
+              <strong><%= match.awayScore %></strong> <%= match.awayTeam %>
+            </h5>
+
+            <hr />
+            <p><strong>Scorers:</strong></p>
+            <ul>
+              <% match.scorers.forEach(scorer => { %>
+              <li>
+                <%= scorer.name %> - <%= scorer.goals %> goal<%= scorer.goals >
+                1 ? 's' : '' %> <% if (scorer.assist && scorer.assist !== '') {
+                %> (Assisted by <%= scorer.assist %>) <% } %>
+              </li>
+              <% }) %>
+            </ul>
+
+            <% if (currentUser && currentUser.isAdmin) { %>
+            <hr />
+            <div class="d-grid gap-2">
+              <!-- Edit button -->
+              <a
+                href="/admin/matches/<%= match._id %>/edit"
+                class="btn btn-sm btn-warning"
+              >
+                ✏️ Edit
+              </a>
+
+              <!-- Delete trigger -->
+              <button
+                type="button"
+                class="btn btn-sm btn-danger"
+                data-bs-toggle="modal"
+                data-bs-target="#confirmDeleteModal-<%= match._id %>"
+              >
+                🗑 Delete
+              </button>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div
+        class="modal fade"
+        id="confirmDeleteModal-<%= match._id %>"
+        tabindex="-1"
+        aria-labelledby="deleteModalLabel-<%= match._id %>"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5
+                class="modal-title text-dark"
+                id="deleteModalLabel-<%= match._id %>"
+              >
+                Confirm Delete
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body text-dark">
+              Are you sure you want to delete the match:
+              <strong><%= match.homeTeam %> vs <%= match.awayTeam %></strong>?
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <form
+                action="/admin/matches/<%= match._id %>?_method=DELETE"
+                method="POST"
+              >
+                <button type="submit" class="btn btn-danger">
+                  🗑 Confirm Delete
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

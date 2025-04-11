@@ -1,0 +1,193 @@
+<%- include('partials/header') %>
+
+<div class="page-center">
+  <div class="container">
+    <div class="card shadow p-4" style="max-width: 600px; margin: 0 auto">
+      <h2 class="text-center mb-4">✍️ Create Match Result</h2>
+
+      <% if (messages.success) { %>
+      <div class="alert alert-success text-center">
+        <%= messages.success[0] %>
+      </div>
+      <% } %> <% if (messages.error) { %>
+      <div class="alert alert-danger text-center"><%= messages.error[0] %></div>
+      <% } %>
+
+      <form
+        method="POST"
+        action="/admin/create-match"
+        id="matchForm"
+        onsubmit="return handleSubmit();"
+      >
+        <div class="mb-3 d-flex justify-content-between">
+          <button
+            type="button"
+            class="btn btn-outline-primary w-50 me-2"
+            onclick="setWombwellTeam('home')"
+          >
+            🏠 Wombwell Home
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary w-50"
+            onclick="setWombwellTeam('away')"
+          >
+            🚌 Wombwell Away
+          </button>
+        </div>
+
+        <div class="mb-3">
+          <label for="homeTeam" class="form-label">Home Team</label>
+          <input
+            type="text"
+            class="form-control"
+            id="homeTeam"
+            name="homeTeam"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="awayTeam" class="form-label">Away Team</label>
+          <input
+            type="text"
+            class="form-control"
+            id="awayTeam"
+            name="awayTeam"
+            required
+          />
+        </div>
+
+        <div class="mb-3 d-flex gap-2">
+          <div class="w-50">
+            <label for="homeScore" class="form-label">Home Score</label>
+            <input
+              type="number"
+              class="form-control"
+              id="homeScore"
+              name="homeScore"
+              required
+            />
+          </div>
+          <div class="w-50">
+            <label for="awayScore" class="form-label">Away Score</label>
+            <input
+              type="number"
+              class="form-control"
+              id="awayScore"
+              name="awayScore"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Add Scorers</label>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <select id="scorerName" class="form-select w-100">
+              <% players.forEach(player => { %>
+              <option value="<%= player.firstName %> <%= player.lastName %>">
+                <%= player.firstName %> <%= player.lastName %>
+              </option>
+              <% }) %>
+            </select>
+
+            <input
+              type="number"
+              id="goalCount"
+              min="1"
+              value="1"
+              class="form-control"
+              style="max-width: 80px"
+            />
+
+            <select id="assistName" class="form-select w-100">
+              <option value="">No Assist</option>
+              <% players.forEach(player => { %>
+              <option value="<%= player.firstName %> <%= player.lastName %>">
+                <%= player.firstName %> <%= player.lastName %>
+              </option>
+              <% }) %>
+            </select>
+
+            <button
+              type="button"
+              class="btn btn-success w-100"
+              onclick="addScorer()"
+            >
+              ➕ Add
+            </button>
+          </div>
+
+          <ul class="list-group mb-2" id="scorerList"></ul>
+          <input type="hidden" name="scorers" id="scorersInput" />
+        </div>
+
+        <div class="text-center">
+          <button class="btn btn-success">✅ Save Match</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setWombwellTeam(position) {
+    if (position === 'home') {
+      document.getElementById('homeTeam').value = 'Wombwell Town';
+      document.getElementById('homeTeam').readOnly = true;
+      document.getElementById('awayTeam').value = '';
+      document.getElementById('awayTeam').readOnly = false;
+    } else {
+      document.getElementById('awayTeam').value = 'Wombwell Town';
+      document.getElementById('awayTeam').readOnly = true;
+      document.getElementById('homeTeam').value = '';
+      document.getElementById('homeTeam').readOnly = false;
+    }
+  }
+
+  const scorerList = document.getElementById('scorerList');
+  const scorersInput = document.getElementById('scorersInput');
+  const scorers = [];
+
+  function renderScorers() {
+    scorerList.innerHTML = '';
+    scorers.forEach((scorer, index) => {
+      const li = document.createElement('li');
+      li.className =
+        'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `
+        ${scorer.name} - ${scorer.goals} goal${scorer.goals > 1 ? 's' : ''}
+        ${scorer.assist ? '(Assisted by ' + scorer.assist + ')' : ''}
+        <button class="btn btn-sm btn-danger" onclick="removeScorer(${index})">❌</button>
+      `;
+      scorerList.appendChild(li);
+    });
+    scorersInput.value = JSON.stringify(scorers);
+  }
+
+  function addScorer() {
+    const name = document.getElementById('scorerName').value;
+    const goals = parseInt(document.getElementById('goalCount').value);
+    const assist = document.getElementById('assistName').value;
+
+    if (!name || isNaN(goals) || goals < 1) return;
+
+    scorers.push({ name, goals, assist });
+    renderScorers();
+  }
+
+  function removeScorer(index) {
+    scorers.splice(index, 1);
+    renderScorers();
+  }
+
+  function handleSubmit() {
+    scorersInput.value = JSON.stringify(scorers);
+    return true;
+  }
+
+  renderScorers();
+</script>
+
+<%- include('partials/footer') %>
