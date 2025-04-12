@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const scorerSchema = new mongoose.Schema({
   name: String,
-  goals: Number,
-  assist: String, // ✅ This is what was missing
+  assist: String, // ✅ Add this if it's not already there
 });
 
 const cardSchema = new mongoose.Schema({
@@ -15,9 +14,16 @@ const matchSchema = new mongoose.Schema({
   awayTeam: String,
   homeScore: Number,
   awayScore: Number,
-  scorers: [scorerSchema],
+  firstHalfScorers: [scorerSchema],
+  secondHalfScorers: [scorerSchema],
   yellowCards: [cardSchema],
   redCards: [cardSchema],
+  matchType: {
+    type: String,
+    enum: ['League', 'Cup', 'Friendly'],
+    required: true,
+  },
+
   date: {
     type: Date,
     default: Date.now,

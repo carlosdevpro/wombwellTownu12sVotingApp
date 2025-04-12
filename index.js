@@ -672,6 +672,61 @@ app.delete(
   }
 );
 
+// ✅ GET Live Match Page
+app.get('/admin/live-match', requireLogin, requireAdmin, async (req, res) => {
+  const players = await Player.find({});
+  res.render('liveMatch', { players, messages: req.flash() });
+});
+
+// ✅ GET Live Match Page
+app.get('/admin/live-match', requireLogin, requireAdmin, async (req, res) => {
+  const players = await Player.find({});
+  res.render('liveMatch', { players, messages: req.flash() });
+});
+
+app.post(
+  '/admin/live-match/end',
+  requireLogin,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const {
+        homeTeam,
+        awayTeam,
+        homeScore,
+        awayScore,
+        firstHalfScorers,
+        secondHalfScorers,
+        yellowCards,
+        redCards,
+        matchType,
+      } = req.body;
+
+      const match = new Match({
+        homeTeam,
+        awayTeam,
+        homeScore: parseInt(homeScore),
+        awayScore: parseInt(awayScore),
+        matchType: matchType || 'League', // default fallback
+        firstHalfScorers: firstHalfScorers ? JSON.parse(firstHalfScorers) : [],
+        secondHalfScorers: secondHalfScorers
+          ? JSON.parse(secondHalfScorers)
+          : [],
+        yellowCards: yellowCards ? JSON.parse(yellowCards) : [],
+        redCards: redCards ? JSON.parse(redCards) : [],
+      });
+
+      await match.save();
+      req.flash('success', '✅ Match saved successfully!');
+      res.redirect('/matches');
+    } catch (err) {
+      console.error('❌ Failed to save live match:', err);
+      req.flash('error', 'Something went wrong saving the live match.');
+      res.redirect('/admin/live-match');
+    }
+  }
+);
+
 // Start server
 app.listen(3000, () => {
   console.log('SERVING YOUR APP ON PORT 3000');

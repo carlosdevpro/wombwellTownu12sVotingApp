@@ -20,20 +20,13 @@
             📱 Send SMS Vote Reminders
           </button>
         </form>
-        <button
-          class="btn btn-danger w-100"
-          data-bs-toggle="modal"
-          data-bs-target="#resetVotesModal"
-        >
-          🔄 Reset All Votes
-        </button>
         <a href="/admin/reset-stats" class="btn btn-outline-danger w-100"
           >🧨 Reset Player Stats (Secure)</a
         >
-        <a href="/admin/create-match" class="btn btn-outline-success w-100"
-          >✍️ Create Match Result</a
+        <a href="/admin/live-match" class="btn btn-outline-success w-100"
+          >📡 Start Live Match</a
         >
-        <a href="/matches" class="btn btn-info w-100">📅 Edit Match Results</a>
+        <a href="/matches" class="btn btn-info w-100">📅 Match Results</a>
       </div>
 
       <!-- Registered Parents -->
@@ -55,9 +48,8 @@
               <p>Voted: <%= p.hasVoted ? '✅' : '❌' %></p>
               <% if (p.lastActive) { %>
               <small>Last Active: <%= p.lastActive.toLocaleString() %></small>
-              <% } else { %>
-              <small><em>Last Active: Not recorded</em></small>
               <% } %>
+
               <form
                 action="/admin/send-reminder/<%= p._id %>"
                 method="POST"
@@ -87,9 +79,9 @@
               <p>Shirt #: <%= p.linkedPlayer?.shirtNumber || 'N/A' %></p>
               <% if (p.lastActive) { %>
               <small>Last Active: <%= p.lastActive.toLocaleString() %></small>
-              <% } else { %>
-              <small><em>Last Active: Not recorded</em></small>
               <% } %>
+
+              <!-- Delete Button -->
               <button
                 type="button"
                 class="btn btn-sm btn-danger w-100 mt-2"
@@ -193,7 +185,7 @@
   </div>
 </div>
 
-<!-- JS to handle global delete -->
+<!-- JS for Delete Modal -->
 <script>
   const deleteModal = document.getElementById('globalDeletePlayerModal');
   deleteModal.addEventListener('show.bs.modal', function (event) {
