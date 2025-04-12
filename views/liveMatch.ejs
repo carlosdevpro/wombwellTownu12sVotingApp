@@ -20,25 +20,16 @@
       >
         <!-- Live Scoreboard -->
         <div
-          class="d-grid bg-dark text-white p-3 rounded mb-4 shadow"
-          style="
-            grid-template-columns: 1fr auto 1fr;
-            text-align: center;
-            align-items: center;
-          "
+          class="d-grid text-center mb-3"
+          style="grid-template-columns: 1fr auto 1fr"
         >
-          <!-- Home Team -->
-          <div class="text-end pe-2">
-            <h5 class="fw-bold m-0" id="displayHomeTeam">Wombwell Town</h5>
+          <div>
+            <h5 class="fw-bold m-0" id="displayHomeTeam">Home</h5>
           </div>
-
-          <!-- Live Score -->
-          <div style="min-width: 80px">
-            <div class="fw-bold fs-3" id="liveScore">0 - 0</div>
+          <div>
+            <span class="fs-4 fw-bold" id="liveScore">0 - 0</span>
           </div>
-
-          <!-- Away Team -->
-          <div class="text-start ps-2">
+          <div>
             <h5 class="fw-bold m-0" id="displayAwayTeam">Opponent</h5>
           </div>
         </div>
@@ -90,7 +81,10 @@
         </div>
 
         <!-- Home and Away Team Inputs with Centered Labels -->
-        <div class="mb-4 d-flex justify-content-between gap-3 text-center">
+        <div
+          id="teamInputsWrapper"
+          class="mb-4 d-flex justify-content-between gap-3 text-center"
+        >
           <div class="flex-fill text-center">
             <label
               for="homeTeam"
@@ -236,7 +230,7 @@
   </div>
 </div>
 
-<script src="/js/liveMatch.js"></script>
+<!-- <script src="/js/liveMatch.js"></script> -->
 <script>
   function setWombwellTeam(position) {
     if (position === 'home') {
@@ -312,6 +306,9 @@
 
     renderScorers();
     updateLiveScoreboard(); // 👈 Update the live display at the top
+    // Reset scorer and assist dropdowns to default
+    document.getElementById('scorerName').value = '';
+    document.getElementById('assistName').value = '';
   }
 
   //   Add opposition goal
@@ -358,6 +355,7 @@
     if (!name) return;
     yellowCards.push({ name });
     renderCards('yellowCardList', yellowCards, 'yellowCardsInput');
+    document.getElementById('yellowCardPlayer').value = '';
   }
 
   function addRedCard() {
@@ -365,6 +363,7 @@
     if (!name) return;
     redCards.push({ name });
     renderCards('redCardList', redCards, 'redCardsInput');
+    document.getElementById('redCardPlayer').value = '';
   }
 
   function renderCards(listId, array, hiddenInputId) {
@@ -394,6 +393,29 @@
     }
   }
 
+  // Make sure it's accessible everywhere
+  function checkAndHideInputs() {
+    const homeInput = document.getElementById('homeTeam');
+    const awayInput = document.getElementById('awayTeam');
+    const wrapper = document.getElementById('teamInputsWrapper');
+
+    const homeVal = homeInput.value.trim();
+    const awayVal = awayInput.value.trim();
+
+    console.log('🏠 Home:', homeVal);
+    console.log('🚌 Away:', awayVal);
+
+    if (homeVal && awayVal) {
+      console.log('✅ Both filled — hiding input wrapper');
+      wrapper.style.display = 'none';
+
+      document.getElementById('displayHomeTeam').textContent = homeVal;
+      document.getElementById('displayAwayTeam').textContent = awayVal;
+    } else {
+      console.log('⛔ Still waiting on both inputs...');
+    }
+  }
+
   function assignWombwell(position) {
     const assignSection = document.getElementById('assignWombwellSection');
     const homeInput = document.getElementById('homeTeam');
@@ -412,6 +434,9 @@
     }
 
     assignSection.style.display = 'none';
+
+    // ✅ Add this line to manually run the hiding logic
+    checkAndHideInputs();
   }
 
   renderScorers(); // 👈 Call this initially on page load
@@ -446,14 +471,7 @@
     document.getElementById('redCardsInput').value = JSON.stringify(redCards);
   }
 </script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('displayHomeScore').textContent =
-      document.getElementById('homeScore').value || '0';
-    document.getElementById('displayAwayScore').textContent =
-      document.getElementById('awayScore').value || '0';
-  });
-</script>
+
 <script>
   function updateLiveScoreboard() {
     const homeScore = document.getElementById('homeScore').value || '0';
@@ -472,6 +490,40 @@
   document
     .getElementById('scorerName')
     .addEventListener('change', filterAssistOptions);
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const homeInput = document.getElementById('homeTeam');
+    const awayInput = document.getElementById('awayTeam');
+    const wrapper = document.getElementById('teamInputsWrapper');
+
+    function checkAndHideInputs() {
+      const homeVal = homeInput.value.trim();
+      const awayVal = awayInput.value.trim();
+
+      console.log('🔥 Function hit');
+      console.log('🏠 Home:', homeVal);
+      console.log('🚌 Away:', awayVal);
+
+      if (homeVal && awayVal) {
+        console.log('✅ Both filled — hiding input wrapper');
+        wrapper.style.setProperty('display', 'none', 'important');
+
+        // Update the live scoreboard
+        document.getElementById('displayHomeTeam').textContent = homeVal;
+        document.getElementById('displayAwayTeam').textContent = awayVal;
+      } else {
+        console.log('⛔ Still waiting on both inputs...');
+      }
+    }
+
+    homeInput.addEventListener('input', checkAndHideInputs);
+    awayInput.addEventListener('input', checkAndHideInputs);
+
+    // Run once immediately on load
+    checkAndHideInputs();
+  });
 </script>
 
 <%- include('partials/footer') %>
