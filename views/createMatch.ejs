@@ -2,7 +2,7 @@
 
 <div class="page-center">
   <div class="container">
-    <div class="card shadow p-4" style="max-width: 600px; margin: 0 auto">
+    <div class="card shadow p-4" style="max-width: 700px; margin: 0 auto">
       <h2 class="text-center mb-4">✍️ Create Match Result</h2>
 
       <% if (messages.success) { %>
@@ -13,12 +13,7 @@
       <div class="alert alert-danger text-center"><%= messages.error[0] %></div>
       <% } %>
 
-      <form
-        method="POST"
-        action="/admin/create-match"
-        id="matchForm"
-        onsubmit="return handleSubmit();"
-      >
+      <form method="POST" action="/admin/create-match" id="matchForm">
         <div class="mb-3 d-flex justify-content-between">
           <button
             type="button"
@@ -66,6 +61,8 @@
               class="form-control"
               id="homeScore"
               name="homeScore"
+              value="0"
+              min="0"
               required
             />
           </div>
@@ -76,22 +73,24 @@
               class="form-control"
               id="awayScore"
               name="awayScore"
+              value="0"
+              min="0"
               required
             />
           </div>
         </div>
 
+        <!-- Scorers Section -->
         <div class="mb-3">
           <label class="form-label">Add Scorers</label>
-          <div class="d-flex flex-wrap gap-2 mb-2">
-            <select id="scorerName" class="form-select w-100">
+          <div class="d-flex gap-2 mb-2">
+            <select id="scorerName" class="form-select">
               <% players.forEach(player => { %>
               <option value="<%= player.firstName %> <%= player.lastName %>">
                 <%= player.firstName %> <%= player.lastName %>
               </option>
               <% }) %>
             </select>
-
             <input
               type="number"
               id="goalCount"
@@ -100,28 +99,65 @@
               class="form-control"
               style="max-width: 80px"
             />
-
-            <select id="assistName" class="form-select w-100">
-              <option value="">No Assist</option>
+            <select id="assistName" class="form-select">
+              <option value="">Unassisted</option>
               <% players.forEach(player => { %>
               <option value="<%= player.firstName %> <%= player.lastName %>">
                 <%= player.firstName %> <%= player.lastName %>
               </option>
               <% }) %>
             </select>
-
-            <button
-              type="button"
-              class="btn btn-success w-100"
-              onclick="addScorer()"
-            >
-              ➕ Add
+            <button type="button" class="btn btn-success" onclick="addScorer()">
+              Add
             </button>
           </div>
-
           <ul class="list-group mb-2" id="scorerList"></ul>
-          <input type="hidden" name="scorers" id="scorersInput" />
         </div>
+
+        <!-- Yellow Cards -->
+        <div class="mb-3">
+          <label class="form-label">🟨 Yellow Cards</label>
+          <div class="d-flex gap-2 mb-2">
+            <select id="yellowCardPlayer" class="form-select">
+              <% players.forEach(player => { %>
+              <option value="<%= player.firstName %> <%= player.lastName %>">
+                <%= player.firstName %> <%= player.lastName %>
+              </option>
+              <% }) %>
+            </select>
+            <button
+              type="button"
+              class="btn btn-warning"
+              onclick="addYellowCard()"
+            >
+              Add
+            </button>
+          </div>
+          <ul class="list-group" id="yellowCardList"></ul>
+        </div>
+
+        <!-- Red Cards -->
+        <div class="mb-3">
+          <label class="form-label">🟥 Red Cards</label>
+          <div class="d-flex gap-2 mb-2">
+            <select id="redCardPlayer" class="form-select">
+              <% players.forEach(player => { %>
+              <option value="<%= player.firstName %> <%= player.lastName %>">
+                <%= player.firstName %> <%= player.lastName %>
+              </option>
+              <% }) %>
+            </select>
+            <button type="button" class="btn btn-danger" onclick="addRedCard()">
+              Add
+            </button>
+          </div>
+          <ul class="list-group" id="redCardList"></ul>
+        </div>
+
+        <!-- Hidden Inputs -->
+        <input type="hidden" name="scorers" id="scorersInput" />
+        <input type="hidden" name="yellowCards" id="yellowCardsInput" />
+        <input type="hidden" name="redCards" id="redCardsInput" />
 
         <div class="text-center">
           <button class="btn btn-success">✅ Save Match</button>
@@ -170,7 +206,6 @@
     const name = document.getElementById('scorerName').value;
     const goals = parseInt(document.getElementById('goalCount').value);
     const assist = document.getElementById('assistName').value;
-
     if (!name || isNaN(goals) || goals < 1) return;
 
     scorers.push({ name, goals, assist });
@@ -182,10 +217,64 @@
     renderScorers();
   }
 
-  function handleSubmit() {
-    scorersInput.value = JSON.stringify(scorers);
-    return true;
+  // Yellow/Red Cards
+  const yellowCards = [];
+  const redCards = [];
+
+  function addYellowCard() {
+    const name = document.getElementById('yellowCardPlayer').value;
+    yellowCards.push({ name });
+    updateCardList('yellowCardList', yellowCards, 'yellowCardsInput');
   }
+
+  function addRedCard() {
+    const name = document.getElementById('redCardPlayer').value;
+    redCards.push({ name });
+    updateCardList('redCardList', redCards, 'redCardsInput');
+  }
+
+  function updateCardList(listId, cardArray, inputId) {
+    const list = document.getElementById(listId);
+    const input = document.getElementById(inputId);
+    list.innerHTML = '';
+    cardArray.forEach((card, index) => {
+      const li = document.createElement('li');
+      li.className =
+        'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `
+        ${card.name}
+        <button class="btn btn-sm btn-outline-danger" onclick="removeCard('${listId}', ${index})">❌</button>
+      `;
+      list.appendChild(li);
+    });
+    input.value = JSON.stringify(cardArray);
+  }
+
+  function removeCard(listId, index) {
+    if (listId === 'yellowCardList') {
+      yellowCards.splice(index, 1);
+      updateCardList('yellowCardList', yellowCards, 'yellowCardsInput');
+    } else if (listId === 'redCardList') {
+      redCards.splice(index, 1);
+      updateCardList('redCardList', redCards, 'redCardsInput');
+    }
+  }
+
+  document.getElementById('matchForm').addEventListener('submit', function (e) {
+    const homeScore = parseInt(document.getElementById('homeScore').value);
+    const awayScore = parseInt(document.getElementById('awayScore').value);
+
+    if ((homeScore > 0 || awayScore > 0) && scorers.length === 0) {
+      alert('Please add at least one scorer if goals are greater than 0.');
+      e.preventDefault();
+      return;
+    }
+
+    scorersInput.value = JSON.stringify(scorers);
+    document.getElementById('yellowCardsInput').value =
+      JSON.stringify(yellowCards);
+    document.getElementById('redCardsInput').value = JSON.stringify(redCards);
+  });
 
   renderScorers();
 </script>

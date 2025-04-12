@@ -511,37 +511,47 @@ app.post(
   }
 );
 
-// ✅ POST route to save a new match
+app.get('/admin/create-match', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const players = await Player.find({});
+    res.render('createMatch', { messages: req.flash(), players });
+  } catch (err) {
+    console.error('❌ Failed to load players:', err);
+    req.flash('error', 'Could not load players for match creation.');
+    res.redirect('/admin');
+  }
+});
+
+// POST route to show the match creation form
 app.post(
   '/admin/create-match',
   requireLogin,
   requireAdmin,
   async (req, res) => {
     try {
-      const { homeTeam, awayTeam, homeScore, awayScore } = req.body;
+      const {
+        homeTeam,
+        awayTeam,
+        homeScore,
+        awayScore,
+        scorers,
+        yellowCards,
+        redCards,
+      } = req.body;
 
-      // Parse scorers JSON properly
-      let scorers = [];
-      if (req.body.scorers) {
-        try {
-          scorers = JSON.parse(req.body.scorers);
-        } catch (e) {
-          console.error('❌ Invalid scorers JSON:', e);
-          req.flash('error', 'Scorers data is invalid.');
-          return res.redirect('/admin/create-match');
-        }
-      }
-
-      const match = new Match({
+      const newMatch = new Match({
         homeTeam,
         awayTeam,
         homeScore: parseInt(homeScore),
         awayScore: parseInt(awayScore),
-        scorers,
+        scorers: scorers ? JSON.parse(scorers) : [],
+        yellowCards: yellowCards ? JSON.parse(yellowCards) : [], // ✅
+        redCards: redCards ? JSON.parse(redCards) : [], // ✅
         date: req.body.date || Date.now(),
       });
 
-      await match.save();
+      await newMatch.save();
+
       req.flash('success', '✅ Match created successfully.');
       res.redirect('/matches');
     } catch (err) {
@@ -551,18 +561,6 @@ app.post(
     }
   }
 );
-
-// GET route to show the match creation form
-app.get('/admin/create-match', requireLogin, requireAdmin, async (req, res) => {
-  try {
-    const players = await Player.find({});
-    res.render('createMatch', { messages: req.flash(), players }); // 🔥 No 'matches' here
-  } catch (err) {
-    console.error('❌ Failed to load players:', err);
-    req.flash('error', 'Could not load players for match creation.');
-    res.redirect('/admin');
-  }
-});
 
 // Show all saved matches
 // ✅ GET route to view all matches
@@ -642,6 +640,37 @@ app.put('/admin/matches/:id', requireLogin, requireAdmin, async (req, res) => {
     res.redirect('/matches');
   }
 });
+
+// ✅ DELETE player and linked parents
+app.delete(
+  '/admin/players/:id',
+  requireLogin,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const player = await Player.findById(req.params.id);
+      if (!player) {
+        req.flash('error', 'Player not found.');
+        return res.redirect('/admin');
+      }
+
+      // 🧹 Remove all parent users linked to this player
+      await User.deleteMany({ linkedPlayer: player._id });
+
+      // 🗑 Delete the player
+      await Player.findByIdAndDelete(player._id);
+      console.log(`🔁 Deleting player ${player.firstName} ${player.lastName}`);
+      console.log(`🔁 Deleting parents linked to player ID: ${player._id}`);
+
+      req.flash('success', 'Player and linked parents deleted successfully.');
+      res.redirect('/admin');
+    } catch (err) {
+      console.error('❌ Error deleting player and parents:', err);
+      req.flash('error', 'Something went wrong deleting the player.');
+      res.redirect('/admin');
+    }
+  }
+);
 
 // Start server
 app.listen(3000, () => {

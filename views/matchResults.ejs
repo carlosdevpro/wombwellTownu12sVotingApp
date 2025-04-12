@@ -43,7 +43,21 @@
               <% }) %>
             </ul>
 
-            <% if (currentUser && currentUser.isAdmin) { %>
+            <% if (match.yellowCards && match.yellowCards.length > 0) { %>
+            <p><strong>🟨 Yellow Cards:</strong></p>
+            <ul>
+              <% match.yellowCards.forEach(card => { %>
+              <li><%= card.name %></li>
+              <% }) %>
+            </ul>
+            <% } %> <% if (match.redCards && match.redCards.length > 0) { %>
+            <p><strong>🟥 Red Cards:</strong></p>
+            <ul>
+              <% match.redCards.forEach(card => { %>
+              <li><%= card.name %></li>
+              <% }) %>
+            </ul>
+            <% } %> <% if (currentUser && currentUser.isAdmin) { %>
             <hr />
             <div class="d-grid gap-2">
               <!-- Edit button -->
