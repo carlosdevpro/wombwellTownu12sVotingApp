@@ -14,75 +14,71 @@
       <% } %>
 
       <form method="POST" action="/admin/create-match" id="matchForm">
-        <div class="mb-3 d-flex justify-content-between">
+        <!-- Wombwell Team Toggle Buttons -->
+        <div class="mb-3 d-flex justify-content-center gap-2">
           <button
             type="button"
-            class="btn btn-outline-primary w-50 me-2"
+            class="btn btn-outline-primary"
             onclick="setWombwellTeam('home')"
           >
             🏠 Wombwell Home
           </button>
           <button
             type="button"
-            class="btn btn-outline-secondary w-50"
+            class="btn btn-outline-primary"
             onclick="setWombwellTeam('away')"
           >
             🚌 Wombwell Away
           </button>
         </div>
 
-        <div class="mb-3">
-          <label for="homeTeam" class="form-label">Home Team</label>
+        <!-- Home Team + Score -->
+        <div class="mb-3 d-flex gap-2">
           <input
             type="text"
             class="form-control"
             id="homeTeam"
             name="homeTeam"
+            placeholder="Home Team"
             required
+          />
+          <input
+            type="number"
+            class="form-control"
+            id="homeScore"
+            name="homeScore"
+            value="0"
+            min="0"
+            required
+            placeholder="Score"
           />
         </div>
 
-        <div class="mb-3">
-          <label for="awayTeam" class="form-label">Away Team</label>
+        <!-- Away Team + Score -->
+        <div class="mb-3 d-flex gap-2">
           <input
             type="text"
             class="form-control"
             id="awayTeam"
             name="awayTeam"
+            placeholder="Away Team"
             required
+          />
+          <input
+            type="number"
+            class="form-control"
+            id="awayScore"
+            name="awayScore"
+            value="0"
+            min="0"
+            required
+            placeholder="Score"
           />
         </div>
 
-        <div class="mb-3 d-flex gap-2">
-          <div class="w-50">
-            <label for="homeScore" class="form-label">Home Score</label>
-            <input
-              type="number"
-              class="form-control"
-              id="homeScore"
-              name="homeScore"
-              value="0"
-              min="0"
-              required
-            />
-          </div>
-          <div class="w-50">
-            <label for="awayScore" class="form-label">Away Score</label>
-            <input
-              type="number"
-              class="form-control"
-              id="awayScore"
-              name="awayScore"
-              value="0"
-              min="0"
-              required
-            />
-          </div>
-        </div>
-
-        <!-- Scorers Section -->
+        <!-- Scorers and Assists -->
         <div class="mb-3">
-          <label class="form-label">Add Scorers</label>
+          <label class="form-label">Add Scorer</label>
           <div class="d-flex gap-2 mb-2">
             <select id="scorerName" class="form-select">
               <% players.forEach(player => { %>
@@ -91,16 +87,8 @@
               </option>
               <% }) %>
             </select>
-            <input
-              type="number"
-              id="goalCount"
-              min="1"
-              value="1"
-              class="form-control"
-              style="max-width: 80px"
-            />
             <select id="assistName" class="form-select">
-              <option value="">Unassisted</option>
+              <option value="">No assist</option>
               <% players.forEach(player => { %>
               <option value="<%= player.firstName %> <%= player.lastName %>">
                 <%= player.firstName %> <%= player.lastName %>
@@ -111,62 +99,67 @@
               Add
             </button>
           </div>
+
           <ul class="list-group mb-2" id="scorerList"></ul>
+          <input type="hidden" name="scorers" id="scorersInput" />
         </div>
-
-        <!-- Yellow Cards -->
-        <div class="mb-3">
-          <label class="form-label">🟨 Yellow Cards</label>
-          <div class="d-flex gap-2 mb-2">
-            <select id="yellowCardPlayer" class="form-select">
-              <% players.forEach(player => { %>
-              <option value="<%= player.firstName %> <%= player.lastName %>">
-                <%= player.firstName %> <%= player.lastName %>
-              </option>
-              <% }) %>
-            </select>
-            <button
-              type="button"
-              class="btn btn-warning"
-              onclick="addYellowCard()"
-            >
-              Add
-            </button>
-          </div>
-          <ul class="list-group" id="yellowCardList"></ul>
-        </div>
-
-        <!-- Red Cards -->
-        <div class="mb-3">
-          <label class="form-label">🟥 Red Cards</label>
-          <div class="d-flex gap-2 mb-2">
-            <select id="redCardPlayer" class="form-select">
-              <% players.forEach(player => { %>
-              <option value="<%= player.firstName %> <%= player.lastName %>">
-                <%= player.firstName %> <%= player.lastName %>
-              </option>
-              <% }) %>
-            </select>
-            <button type="button" class="btn btn-danger" onclick="addRedCard()">
-              Add
-            </button>
-          </div>
-          <ul class="list-group" id="redCardList"></ul>
-        </div>
-
-        <!-- Hidden Inputs -->
-        <input type="hidden" name="scorers" id="scorersInput" />
-        <input type="hidden" name="yellowCards" id="yellowCardsInput" />
-        <input type="hidden" name="redCards" id="redCardsInput" />
 
         <div class="text-center">
-          <button class="btn btn-success">✅ Save Match</button>
+          <button class="btn btn-primary">✅ Save Match</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
+<script>
+  const scorerList = document.getElementById('scorerList');
+  const scorersInput = document.getElementById('scorersInput');
+  const scorers = [];
+
+  function renderScorers() {
+    scorerList.innerHTML = '';
+    scorers.forEach((scorer, index) => {
+      const li = document.createElement('li');
+      li.className =
+        'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `
+      ${scorer.name} ${
+        scorer.assist ? '(Assisted by ' + scorer.assist + ')' : ''
+      }
+      <button class="btn btn-sm btn-danger" onclick="removeScorer(${index})">❌</button>
+    `;
+      scorerList.appendChild(li);
+    });
+    scorersInput.value = JSON.stringify(scorers);
+  }
+
+  function addScorer() {
+    const name = document.getElementById('scorerName').value;
+    const assist = document.getElementById('assistName').value;
+
+    if (!name) return;
+
+    scorers.push({ name, goals: 1, assist });
+    renderScorers();
+  }
+
+  function removeScorer(index) {
+    scorers.splice(index, 1);
+    renderScorers();
+  }
+
+  document.getElementById('matchForm').addEventListener('submit', function (e) {
+    const homeScore = parseInt(document.getElementById('homeScore').value);
+    const awayScore = parseInt(document.getElementById('awayScore').value);
+    if ((homeScore > 0 || awayScore > 0) && scorers.length === 0) {
+      alert('Please add at least one scorer if goals are greater than 0.');
+      e.preventDefault();
+    }
+  });
+
+  renderScorers();
+</script>
 <script>
   function setWombwellTeam(position) {
     if (position === 'home') {
@@ -181,102 +174,6 @@
       document.getElementById('homeTeam').readOnly = false;
     }
   }
-
-  const scorerList = document.getElementById('scorerList');
-  const scorersInput = document.getElementById('scorersInput');
-  const scorers = [];
-
-  function renderScorers() {
-    scorerList.innerHTML = '';
-    scorers.forEach((scorer, index) => {
-      const li = document.createElement('li');
-      li.className =
-        'list-group-item d-flex justify-content-between align-items-center';
-      li.innerHTML = `
-        ${scorer.name} - ${scorer.goals} goal${scorer.goals > 1 ? 's' : ''}
-        ${scorer.assist ? '(Assisted by ' + scorer.assist + ')' : ''}
-        <button class="btn btn-sm btn-danger" onclick="removeScorer(${index})">❌</button>
-      `;
-      scorerList.appendChild(li);
-    });
-    scorersInput.value = JSON.stringify(scorers);
-  }
-
-  function addScorer() {
-    const name = document.getElementById('scorerName').value;
-    const goals = parseInt(document.getElementById('goalCount').value);
-    const assist = document.getElementById('assistName').value;
-    if (!name || isNaN(goals) || goals < 1) return;
-
-    scorers.push({ name, goals, assist });
-    renderScorers();
-  }
-
-  function removeScorer(index) {
-    scorers.splice(index, 1);
-    renderScorers();
-  }
-
-  // Yellow/Red Cards
-  const yellowCards = [];
-  const redCards = [];
-
-  function addYellowCard() {
-    const name = document.getElementById('yellowCardPlayer').value;
-    yellowCards.push({ name });
-    updateCardList('yellowCardList', yellowCards, 'yellowCardsInput');
-  }
-
-  function addRedCard() {
-    const name = document.getElementById('redCardPlayer').value;
-    redCards.push({ name });
-    updateCardList('redCardList', redCards, 'redCardsInput');
-  }
-
-  function updateCardList(listId, cardArray, inputId) {
-    const list = document.getElementById(listId);
-    const input = document.getElementById(inputId);
-    list.innerHTML = '';
-    cardArray.forEach((card, index) => {
-      const li = document.createElement('li');
-      li.className =
-        'list-group-item d-flex justify-content-between align-items-center';
-      li.innerHTML = `
-        ${card.name}
-        <button class="btn btn-sm btn-outline-danger" onclick="removeCard('${listId}', ${index})">❌</button>
-      `;
-      list.appendChild(li);
-    });
-    input.value = JSON.stringify(cardArray);
-  }
-
-  function removeCard(listId, index) {
-    if (listId === 'yellowCardList') {
-      yellowCards.splice(index, 1);
-      updateCardList('yellowCardList', yellowCards, 'yellowCardsInput');
-    } else if (listId === 'redCardList') {
-      redCards.splice(index, 1);
-      updateCardList('redCardList', redCards, 'redCardsInput');
-    }
-  }
-
-  document.getElementById('matchForm').addEventListener('submit', function (e) {
-    const homeScore = parseInt(document.getElementById('homeScore').value);
-    const awayScore = parseInt(document.getElementById('awayScore').value);
-
-    if ((homeScore > 0 || awayScore > 0) && scorers.length === 0) {
-      alert('Please add at least one scorer if goals are greater than 0.');
-      e.preventDefault();
-      return;
-    }
-
-    scorersInput.value = JSON.stringify(scorers);
-    document.getElementById('yellowCardsInput').value =
-      JSON.stringify(yellowCards);
-    document.getElementById('redCardsInput').value = JSON.stringify(redCards);
-  });
-
-  renderScorers();
 </script>
 
 <%- include('partials/footer') %>

@@ -210,3 +210,14 @@
 </script>
 
 <%- include('partials/footer') %>
+
+<script>
+  // Automatically hide flash messages after 4 seconds
+  setTimeout(() => {
+    const alert = document.querySelector('.alert');
+    if (alert) {
+      alert.classList.add('fade');
+      setTimeout(() => alert.remove(), 500); // wait for fade animation to finish
+    }
+  }, 4000);
+</script>

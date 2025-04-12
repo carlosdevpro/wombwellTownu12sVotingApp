@@ -164,3 +164,7 @@ body {
 .card-alt-b {
   background-color: #414141;
 }
+.alert.fade {
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+}

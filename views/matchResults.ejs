@@ -36,9 +36,8 @@
             <ul>
               <% match.scorers.forEach(scorer => { %>
               <li>
-                <%= scorer.name %> - <%= scorer.goals %> goal<%= scorer.goals >
-                1 ? 's' : '' %> <% if (scorer.assist && scorer.assist !== '') {
-                %> (Assisted by <%= scorer.assist %>) <% } %>
+                <%= scorer.name %> <% if (scorer.assist) { %> (Assisted by <%=
+                scorer.assist %>) <% } %>
               </li>
               <% }) %>
             </ul>

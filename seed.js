@@ -58,6 +58,7 @@ const players = [
     shirtNumber: 17,
   },
   { firstName: 'Rares', lastName: 'Costa', position: 'FW', shirtNumber: 13 },
+  { firstName: 'Tommy', lastName: 'Ballsack', position: 'A', shirtNumber: 21 },
 ];
 
 const seedPlayers = async () => {
