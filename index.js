@@ -619,24 +619,61 @@ app.get(
 );
 
 // ✅ PUT route to update a match
+// ✅ PUT route to update a match
 app.put('/admin/matches/:id', requireLogin, requireAdmin, async (req, res) => {
   try {
-    const { homeTeam, awayTeam, homeScore, awayScore, scorers } = req.body;
-    const updatedScorers = scorers ? JSON.parse(scorers) : [];
+    const {
+      homeTeam,
+      awayTeam,
+      homeScore,
+      awayScore,
+      firstHalfScorers,
+      secondHalfScorers,
+      yellowCards,
+      redCards,
+    } = req.body;
 
+    // ✅ Safely parse data
+    const parsedFirstHalf =
+      typeof firstHalfScorers === 'string'
+        ? JSON.parse(firstHalfScorers)
+        : firstHalfScorers;
+    const parsedSecondHalf =
+      typeof secondHalfScorers === 'string'
+        ? JSON.parse(secondHalfScorers)
+        : secondHalfScorers;
+    const parsedYellowCards = Array.isArray(yellowCards)
+      ? JSON.parse(yellowCards[0])
+      : [];
+    const parsedRedCards = Array.isArray(redCards)
+      ? JSON.parse(redCards[0])
+      : [];
+
+    // ✅ Optional logging for debug
+    console.log('➡️ PUT /admin/matches/:id fired');
+    console.log('📦 Request body:', req.body);
+    console.log('✅ Parsed First Half:', parsedFirstHalf);
+    console.log('✅ Parsed Second Half:', parsedSecondHalf);
+    console.log('✅ Parsed Yellow Cards:', parsedYellowCards);
+    console.log('✅ Parsed Red Cards:', parsedRedCards);
+
+    // ✅ Update the match
     await Match.findByIdAndUpdate(req.params.id, {
       homeTeam,
       awayTeam,
       homeScore: parseInt(homeScore),
       awayScore: parseInt(awayScore),
-      scorers: updatedScorers,
+      firstHalfScorers: parsedFirstHalf,
+      secondHalfScorers: parsedSecondHalf,
+      yellowCards: parsedYellowCards,
+      redCards: parsedRedCards,
     });
 
-    req.flash('success', 'Match updated successfully.');
+    req.flash('success', '✅ Match updated successfully.');
     res.redirect('/matches');
   } catch (err) {
-    console.error('Failed to update match:', err);
-    req.flash('error', 'Error updating the match.');
+    console.error('❌ Failed to update match:', err);
+    req.flash('error', 'Something went wrong updating the match.');
     res.redirect('/matches');
   }
 });
