@@ -14,6 +14,7 @@ const Player = require('./models/player');
 const Match = require('./models/match');
 const { sendPasswordReset } = require('./mailer');
 const { sendVoteReminder, sendFinalReminder } = require('./sms');
+const updatePlayerStats = require('./utils/updatePlayerStats');
 
 // 🟢 Connect to MongoDB
 console.log('Using MONGO_URI:', process.env.MONGO_URI);
@@ -217,7 +218,6 @@ app.post('/logout', async (req, res) => {
 });
 
 // ✅ Login
-app.get('/login', (req, res) => res.render('login'));
 app.get('/login/player', (req, res) => res.render('playerLogin'));
 
 app.post('/login/player', async (req, res) => {
@@ -237,6 +237,11 @@ app.post('/login/player', async (req, res) => {
   res.redirect('/');
 });
 
+// ✅ Render the login page
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -252,7 +257,7 @@ app.post('/login', async (req, res) => {
     return res.redirect('/login');
   }
 
-  // ✅ Set session user_id
+  // ✅ Set session
   req.session.user_id = user._id;
 
   // ✅ Set online status
@@ -267,7 +272,7 @@ app.post('/login', async (req, res) => {
   });
   console.log('➡️ Session object:', req.session);
 
-  // 🧠 Important: Save session before redirecting
+  // 🧠 Save session before redirect
   req.session.save((err) => {
     if (err) {
       console.error('❌ Session save error:', err);
@@ -275,7 +280,8 @@ app.post('/login', async (req, res) => {
       return res.redirect('/login');
     }
 
-    res.redirect(user.isAdmin ? '/admin' : '/');
+    // ✅ Send admin to /admin, everyone else to /
+    res.redirect('/');
   });
 });
 
@@ -344,16 +350,85 @@ app.post('/admin/reset-votes', requireLogin, requireAdmin, async (req, res) => {
 });
 
 // Leaderboards
+// ✅ Updated /leaderboard to show combined MOTM totals
 app.get('/leaderboard', async (req, res) => {
-  const players = await Player.find().sort({ votes: -1 });
+  let players = await Player.aggregate([
+    {
+      $addFields: {
+        totalMotm: { $add: ['$motmOpposition', '$parentMotmWins'] },
+      },
+    },
+  ]);
+
+  const allZero = players.every(
+    (p) => p.motmOpposition === 0 && p.parentMotmWins === 0
+  );
+
+  if (allZero) {
+    // Sort alphabetically by full name
+    players.sort((a, b) =>
+      (a.firstName + ' ' + a.lastName).localeCompare(
+        b.firstName + ' ' + b.lastName
+      )
+    );
+  } else {
+    // Sort by total MOTM
+    players.sort((a, b) => b.totalMotm - a.totalMotm);
+  }
+
   res.render('leaderboard', { players });
 });
 
+// GET /stats
 app.get('/stats', requireLogin, async (req, res) => {
-  const goals = await Player.find().sort({ goals: -1 });
-  const assists = await Player.find().sort({ assists: -1 });
-  const motmWins = await Player.find().sort({ motmWins: -1 });
-  res.render('stats', { goals, assists, motmWins });
+  let allPlayers = await Player.find({});
+  const topGoals = await Player.find().sort({ goals: -1 }).limit(3);
+  const topAssists = await Player.find().sort({ assists: -1 }).limit(3);
+
+  // Check if all player stats are zero
+  const allZero = allPlayers.every(
+    (p) =>
+      p.goals === 0 &&
+      p.assists === 0 &&
+      p.motmOpposition === 0 &&
+      p.parentMotmWins === 0
+  );
+
+  if (allZero) {
+    // Sort alphabetically if all stats are 0
+    allPlayers = allPlayers.sort((a, b) =>
+      (a.firstName + ' ' + a.lastName).localeCompare(
+        b.firstName + ' ' + b.lastName
+      )
+    );
+  } else {
+    // Otherwise sort by goals then assists
+    allPlayers = allPlayers.sort((a, b) => {
+      if (b.goals !== a.goals) return b.goals - a.goals;
+      return b.assists - a.assists;
+    });
+  }
+
+  // Combined MOTM leaderboard
+  const combinedMotm = await Player.aggregate([
+    {
+      $addFields: {
+        totalMotm: {
+          $add: ['$motmOpposition', '$parentMotmWins'],
+        },
+      },
+    },
+    { $sort: { totalMotm: -1 } },
+    { $limit: 3 },
+  ]);
+
+  res.render('stats', {
+    allPlayers,
+    topGoals,
+    topAssists,
+    combinedMotm,
+    messages: req.flash(),
+  });
 });
 
 // Edit Stats
@@ -401,28 +476,29 @@ app.post(
   requireLogin,
   requireAdmin,
   async (req, res) => {
-    const { secretCode } = req.body;
-
-    if (secretCode !== process.env.STAT_RESET_SECRET) {
-      req.flash('error', 'Incorrect secret key.');
-      return res.redirect('/admin');
-    }
-
-    console.log('ENV SECRET:', process.env.STAT_RESET_SECRET);
-    console.log('USER SUBMITTED:', req.body.secretCode);
-
     try {
       await Player.updateMany(
         {},
-        { $set: { goals: 0, assists: 0, motmWins: 0 } }
+        {
+          $set: {
+            goals: 0,
+            assists: 0,
+            yellowCards: 0,
+            redCards: 0,
+            motmOpposition: 0, // 🟢 THIS is the real field being used
+            parentMotmWins: 0,
+            // 🏅 Parents' MoTM
+          },
+        }
       );
+
       req.flash('success', '✅ All player stats have been reset.');
+      res.redirect('/stats'); // Or redirect wherever you like
     } catch (err) {
       console.error('❌ Failed to reset stats:', err);
       req.flash('error', 'Something went wrong while resetting stats.');
+      res.redirect('/admin');
     }
-
-    res.redirect('/admin/reset-stats');
   }
 );
 
@@ -583,12 +659,72 @@ app.delete(
   requireAdmin,
   async (req, res) => {
     try {
+      const match = await Match.findById(req.params.id);
+      if (!match) {
+        req.flash('error', 'Match not found.');
+        return res.redirect('/matches');
+      }
+
+      // 🧹 Revert stats before deleting
+      const allScorers = [
+        ...(match.firstHalfScorers || []),
+        ...(match.secondHalfScorers || []),
+      ];
+      for (const s of allScorers) {
+        const player = await Player.findOne({ fullName: s.name });
+        if (player) {
+          player.goals -= s.goals || 1;
+          if (s.assist) {
+            const assister = await Player.findOne({ fullName: s.assist });
+            if (assister) {
+              assister.assists -= 1;
+              await assister.save();
+            }
+          }
+          await player.save();
+        }
+      }
+
+      for (const y of match.yellowCards || []) {
+        const player = await Player.findOne({ fullName: y.name });
+        if (player) {
+          player.yellowCards -= 1;
+          await player.save();
+        }
+      }
+
+      for (const r of match.redCards || []) {
+        const player = await Player.findOne({ fullName: r.name });
+        if (player) {
+          player.redCards -= 1;
+          await player.save();
+        }
+      }
+
+      if (match.motmOpposition) {
+        const player = await Player.findOne({ fullName: match.motmOpposition });
+        if (player) {
+          player.motmOpposition -= 1;
+          await player.save();
+        }
+      }
+
+      if (match.parentMotm) {
+        const player = await Player.findOne({ fullName: match.parentMotm });
+        if (player) {
+          player.parentMotmWins -= 1;
+          await player.save();
+        }
+      }
+
+      // 🗑 Finally delete the match
       await Match.findByIdAndDelete(req.params.id);
-      req.flash('success', 'Match deleted successfully.');
+      req.flash('success', '✅ Match deleted and stats reverted.');
     } catch (err) {
-      console.error('Failed to delete match:', err);
-      req.flash('error', 'Error deleting the match.');
+      console.error('❌ Error deleting match and reverting stats:', err);
+      req.flash('error', 'Something went wrong deleting the match.');
     }
+
     res.redirect('/matches');
   }
 );
@@ -619,7 +755,7 @@ app.get(
 );
 
 // ✅ PUT route to update a match
-// ✅ PUT route to update a match
+// ✅ PUT route with automatic stat updates
 app.put('/admin/matches/:id', requireLogin, requireAdmin, async (req, res) => {
   try {
     const {
@@ -631,33 +767,125 @@ app.put('/admin/matches/:id', requireLogin, requireAdmin, async (req, res) => {
       secondHalfScorers,
       yellowCards,
       redCards,
+      oppositionMotm,
+      parentsMotm,
     } = req.body;
 
-    // ✅ Safely parse data
-    const parsedFirstHalf =
-      typeof firstHalfScorers === 'string'
-        ? JSON.parse(firstHalfScorers)
-        : firstHalfScorers;
-    const parsedSecondHalf =
-      typeof secondHalfScorers === 'string'
-        ? JSON.parse(secondHalfScorers)
-        : secondHalfScorers;
-    const parsedYellowCards = Array.isArray(yellowCards)
-      ? JSON.parse(yellowCards[0])
+    // Parse JSON safely
+    const parsedFirstHalf = firstHalfScorers
+      ? JSON.parse(firstHalfScorers)
       : [];
-    const parsedRedCards = Array.isArray(redCards)
-      ? JSON.parse(redCards[0])
+    const parsedSecondHalf = secondHalfScorers
+      ? JSON.parse(secondHalfScorers)
       : [];
+    const parsedYellows = yellowCards ? JSON.parse(yellowCards) : [];
+    const parsedReds = redCards ? JSON.parse(redCards) : [];
 
-    // ✅ Optional logging for debug
-    console.log('➡️ PUT /admin/matches/:id fired');
-    console.log('📦 Request body:', req.body);
-    console.log('✅ Parsed First Half:', parsedFirstHalf);
-    console.log('✅ Parsed Second Half:', parsedSecondHalf);
-    console.log('✅ Parsed Yellow Cards:', parsedYellowCards);
-    console.log('✅ Parsed Red Cards:', parsedRedCards);
+    // 🧹 Revert stats by finding the original match first
+    const existingMatch = await Match.findById(req.params.id);
 
-    // ✅ Update the match
+    if (existingMatch) {
+      const allOldScorers = [
+        ...(existingMatch.firstHalfScorers || []),
+        ...(existingMatch.secondHalfScorers || []),
+      ];
+
+      for (const s of allOldScorers) {
+        const player = await Player.findOne({ fullName: s.name });
+        if (player) {
+          player.goals -= s.goals || 1;
+          if (s.assist) player.assists -= 1;
+          await player.save();
+        }
+      }
+
+      for (const y of existingMatch.yellowCards || []) {
+        const player = await Player.findOne({ fullName: y.name });
+        if (player) {
+          player.yellowCards -= 1;
+          await player.save();
+        }
+      }
+
+      for (const r of existingMatch.redCards || []) {
+        const player = await Player.findOne({ fullName: r.name });
+        if (player) {
+          player.redCards -= 1;
+          await player.save();
+        }
+      }
+
+      if (existingMatch.oppositionMotm) {
+        const player = await Player.findOne({
+          fullName: existingMatch.oppositionMotm,
+        });
+        if (player) {
+          player.motmOpposition -= 1;
+          await player.save();
+        }
+      }
+
+      if (existingMatch.parentsMotm) {
+        const player = await Player.findOne({
+          fullName: existingMatch.parentsMotm,
+        });
+        if (player) {
+          player.motmParents -= 1;
+          await player.save();
+        }
+      }
+    }
+
+    // 🧮 Update stats from new input
+    const allNewScorers = [...parsedFirstHalf, ...parsedSecondHalf];
+    for (const s of allNewScorers) {
+      const player = await Player.findOne({ fullName: s.name });
+      if (player) {
+        player.goals += s.goals || 1;
+        if (s.assist) {
+          const assister = await Player.findOne({ fullName: s.assist });
+          if (assister) {
+            assister.assists += 1;
+            await assister.save();
+          }
+        }
+        await player.save();
+      }
+    }
+
+    for (const y of parsedYellows) {
+      const player = await Player.findOne({ fullName: y.name });
+      if (player) {
+        player.yellowCards += 1;
+        await player.save();
+      }
+    }
+
+    for (const r of parsedReds) {
+      const player = await Player.findOne({ fullName: r.name });
+      if (player) {
+        player.redCards += 1;
+        await player.save();
+      }
+    }
+
+    if (oppositionMotm) {
+      const player = await Player.findOne({ fullName: oppositionMotm });
+      if (player) {
+        player.motmOpposition += 1;
+        await player.save();
+      }
+    }
+
+    if (parentsMotm) {
+      const player = await Player.findOne({ fullName: parentsMotm });
+      if (player) {
+        player.motmParents += 1;
+        await player.save();
+      }
+    }
+
+    // ✅ Save updated match
     await Match.findByIdAndUpdate(req.params.id, {
       homeTeam,
       awayTeam,
@@ -665,11 +893,21 @@ app.put('/admin/matches/:id', requireLogin, requireAdmin, async (req, res) => {
       awayScore: parseInt(awayScore),
       firstHalfScorers: parsedFirstHalf,
       secondHalfScorers: parsedSecondHalf,
-      yellowCards: parsedYellowCards,
-      redCards: parsedRedCards,
+      yellowCards: parsedYellows,
+      redCards: parsedReds,
+      oppositionMotm,
+      parentsMotm,
     });
+    // await updatePlayerStats({
+    //   firstHalfScorers: match.firstHalfScorers,
+    //   secondHalfScorers: match.secondHalfScorers,
+    //   yellowCards: match.yellowCards,
+    //   redCards: match.redCards,
+    //   oppositionMotm: match.oppositionMotm,
+    //   parentMotm: match.parentMotm,
+    // });
 
-    req.flash('success', '✅ Match updated successfully.');
+    req.flash('success', '✅ Match updated successfully and stats adjusted.');
     res.redirect('/matches');
   } catch (err) {
     console.error('❌ Failed to update match:', err);
@@ -715,54 +953,135 @@ app.get('/admin/live-match', requireLogin, requireAdmin, async (req, res) => {
   res.render('liveMatch', { players, messages: req.flash() });
 });
 
-// ✅ GET Live Match Page
-app.get('/admin/live-match', requireLogin, requireAdmin, async (req, res) => {
-  const players = await Player.find({});
-  res.render('liveMatch', { players, messages: req.flash() });
+app.post('/admin/live-match/end', async (req, res) => {
+  try {
+    const {
+      homeTeam,
+      awayTeam,
+      homeScore,
+      awayScore,
+      matchType,
+      firstHalfScorers,
+      secondHalfScorers,
+      yellowCards,
+      redCards,
+      motmOpposition,
+      parentMotm,
+    } = req.body;
+
+    const match = new Match({
+      homeTeam,
+      awayTeam,
+      homeScore,
+      awayScore,
+      matchType,
+      firstHalfScorers: JSON.parse(firstHalfScorers),
+      secondHalfScorers: JSON.parse(secondHalfScorers),
+      yellowCards: JSON.parse(yellowCards),
+      redCards: JSON.parse(redCards),
+      motmOpposition,
+      parentMotm,
+    });
+
+    await match.save();
+    console.log('🧪 Submitted MOTM:', motmOpposition);
+
+    // ✅ Update stats for scorers and assisters
+    const allScorers = [
+      ...JSON.parse(firstHalfScorers),
+      ...JSON.parse(secondHalfScorers),
+    ];
+    for (const scorer of allScorers) {
+      const player = await Player.findOne({
+        $expr: {
+          $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, scorer.name],
+        },
+      });
+      if (player) {
+        player.goals += 1;
+        await player.save();
+      }
+
+      if (scorer.assist) {
+        const assister = await Player.findOne({
+          $expr: {
+            $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, scorer.assist],
+          },
+        });
+        if (assister) {
+          assister.assists += 1;
+          await assister.save();
+        }
+      }
+    }
+
+    // ✅ Update stat for Opposition MOTM
+    if (motmOpposition) {
+      const player = await Player.findOneAndUpdate(
+        {
+          $expr: {
+            $eq: [
+              { $concat: ['$firstName', ' ', '$lastName'] },
+              motmOpposition,
+            ],
+          },
+        },
+        { $inc: { motmOpposition: 1 } },
+        { new: true } // 👈 Return the updated document
+      );
+
+      if (player) {
+        console.log(
+          '✅ Updated Opposition MOTM:',
+          player.firstName,
+          player.lastName
+        );
+      } else {
+        console.log('❌ Opposition MOTM not found:', motmOpposition);
+      }
+    }
+
+    // ✅ Update stat for Parent MOTM
+    if (parentMotm) {
+      const player = await Player.findOneAndUpdate(
+        {
+          $expr: {
+            $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, parentMotm],
+          },
+        },
+        { $inc: { parentMotmWins: 1 } },
+        { new: true } // 👈 Return the updated document
+      );
+
+      if (player) {
+        console.log(
+          '✅ Updated Parent MOTM:',
+          player.firstName,
+          player.lastName
+        );
+      } else {
+        console.log('❌ Parent MOTM not found:', parentMotm);
+      }
+    }
+
+    req.flash('success', '✅ Match saved successfully!');
+    res.redirect('/matches');
+  } catch (err) {
+    console.error('❌ Error saving match:', err);
+    req.flash('error', 'Something went wrong saving the match.');
+    res.redirect('/admin/live-match');
+  }
 });
 
-app.post(
-  '/admin/live-match/end',
-  requireLogin,
-  requireAdmin,
-  async (req, res) => {
-    try {
-      const {
-        homeTeam,
-        awayTeam,
-        homeScore,
-        awayScore,
-        firstHalfScorers,
-        secondHalfScorers,
-        yellowCards,
-        redCards,
-        matchType,
-      } = req.body;
-
-      const match = new Match({
-        homeTeam,
-        awayTeam,
-        homeScore: parseInt(homeScore),
-        awayScore: parseInt(awayScore),
-        matchType: matchType || 'League', // default fallback
-        firstHalfScorers: firstHalfScorers ? JSON.parse(firstHalfScorers) : [],
-        secondHalfScorers: secondHalfScorers
-          ? JSON.parse(secondHalfScorers)
-          : [],
-        yellowCards: yellowCards ? JSON.parse(yellowCards) : [],
-        redCards: redCards ? JSON.parse(redCards) : [],
-      });
-
-      await match.save();
-      req.flash('success', '✅ Match saved successfully!');
-      res.redirect('/matches');
-    } catch (err) {
-      console.error('❌ Failed to save live match:', err);
-      req.flash('error', 'Something went wrong saving the live match.');
-      res.redirect('/admin/live-match');
-    }
+// // Only show this page for your user account
+app.get('/admin/secret-tools', requireLogin, async (req, res) => {
+  const user = await User.findById(req.session.user_id);
+  if (!user || !user.isAdmin || user.email !== 'carlos.wood1@icloud.com') {
+    req.flash('error', 'Access denied.');
+    return res.redirect('/');
   }
-);
+  res.render('adminSecretTools');
+});
 
 // Start server
 app.listen(3000, () => {

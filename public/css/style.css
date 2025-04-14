@@ -173,3 +173,24 @@ body {
     text-align: center !important;
   }
 }
+@media (max-width: 576px) {
+  .table th,
+  .table td {
+    font-size: 0.85rem;
+    padding: 0.3rem;
+  }
+}
+.table td,
+.table th {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.table td:first-child,
+.table th:first-child {
+  text-align: left;
+}
+
+.table {
+  font-size: 0.95rem;
+}

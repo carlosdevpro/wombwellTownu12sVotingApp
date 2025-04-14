@@ -14,7 +14,9 @@
               <th>Rank</th>
               <th>Full Name</th>
               <th>Position</th>
-              <th>Total Votes</th>
+              <th>O🎖️</th>
+              <th>P🏅</th>
+              <th>Total MOTM</th>
             </tr>
           </thead>
           <tbody>
@@ -23,7 +25,9 @@
               <td><%= index + 1 %></td>
               <td><%= player.firstName %> <%= player.lastName %></td>
               <td><%= player.position %></td>
-              <td><%= player.votes %></td>
+              <td><%= player.motmOpposition || 0 %></td>
+              <td><%= player.parentMotmWins || 0 %></td>
+              <td><%= player.totalMotm || 0 %></td>
             </tr>
             <% }) %>
           </tbody>

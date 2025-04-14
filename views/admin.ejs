@@ -13,20 +13,20 @@
       <div class="alert alert-danger text-center"><%= messages.error[0] %></div>
       <% } %>
 
-      <div class="d-grid gap-3 mb-4" style="max-width: 300px; margin: 0 auto">
-        <a href="/" class="btn btn-primary w-100">🏠 Back to Home</a>
-        <form action="/admin/send-reminders" method="POST" class="w-100">
-          <button type="submit" class="btn btn-warning text-black w-100">
+      <div class="d-grid gap-2" style="max-width: 300px; margin: 0 auto">
+        <a href="/" class="btn btn-primary">🏠 Back to Home</a>
+
+        <form action="/admin/send-reminders" method="POST">
+          <button type="submit" class="btn btn-warning text-black">
             📱 Send SMS Vote Reminders
           </button>
         </form>
-        <a href="/admin/reset-stats" class="btn btn-outline-danger w-100"
-          >🧨 Reset Player Stats (Secure)</a
-        >
-        <a href="/admin/live-match" class="btn btn-outline-success w-100"
-          >📡 Start Live Match</a
-        >
-        <a href="/matches" class="btn btn-info w-100">📅 Match Results</a>
+
+        <a href="/admin/live-match" class="btn btn-outline-success">
+          📡 Start Live Match
+        </a>
+
+        <a href="/matches" class="btn btn-info mb-3">📅 Match Results</a>
       </div>
 
       <!-- Registered Parents -->

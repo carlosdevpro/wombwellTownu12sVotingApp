@@ -1,21 +1,10 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const playerSchema = new mongoose.Schema({
+const playerSchema = new Schema({
   firstName: String,
   lastName: String,
-  position: {
-    type: String,
-    enum: ['GK', 'DEF', 'MID', 'ST'],
-    required: true,
-  },
-  shirtNumber: {
-    type: Number,
-    required: true,
-  },
-  votes: {
-    type: Number,
-    default: 0,
-  },
+  shirtNumber: Number,
   goals: {
     type: Number,
     default: 0,
@@ -24,7 +13,27 @@ const playerSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  yellowCards: {
+    type: Number,
+    default: 0,
+  },
+  redCards: {
+    type: Number,
+    default: 0,
+  },
+  motmVotes: {
+    type: Number,
+    default: 0, // 🟢 Parent Man of the Match votes
+  },
+  motmOpposition: {
+    type: Number,
+    default: 0, // 🟠 Opposition manager's MOTM awards
+  },
   motmWins: {
+    type: Number,
+    default: 0,
+  },
+  parentMotmWins: {
     type: Number,
     default: 0,
   },

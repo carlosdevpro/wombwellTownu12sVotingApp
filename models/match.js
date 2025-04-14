@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const scorerSchema = new mongoose.Schema({
   name: String,
-  assist: String, // ✅ Add this if it's not already there
+  goals: Number,
+  assist: String,
 });
 
 const cardSchema = new mongoose.Schema({
@@ -14,20 +15,20 @@ const matchSchema = new mongoose.Schema({
   awayTeam: String,
   homeScore: Number,
   awayScore: Number,
+  date: { type: Date, default: Date.now },
+  matchType: {
+    type: String,
+    enum: ['League', 'Cup', 'Friendly'],
+    default: 'League',
+  },
   firstHalfScorers: [scorerSchema],
   secondHalfScorers: [scorerSchema],
   yellowCards: [cardSchema],
   redCards: [cardSchema],
-  matchType: {
-    type: String,
-    enum: ['League', 'Cup', 'Friendly'],
-    required: true,
-  },
 
-  date: {
-    type: Date,
-    default: Date.now,
-  },
+  // NEW fields for Man of the Match
+  parentMOTM: { type: String, default: '' },
+  motmOpposition: { type: String, default: '' },
 });
 
 module.exports = mongoose.model('Match', matchSchema);

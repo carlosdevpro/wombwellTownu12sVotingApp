@@ -2,9 +2,13 @@
 
 <div class="container my-4">
   <h2 class="text-center mb-4">📅 Match Results</h2>
-
+  <div class="d-flex justify-content-center mb-3">
+    <a href="/" class="btn btn-primary">🏠 Back to Home</a>
+  </div>
   <% if (matches.length === 0) { %>
-  <p class="text-center text-muted">No matches have been recorded yet.</p>
+  <p class="alert alert-warning text-center">
+    ⚠️ No matches have been recorded yet.
+  </p>
   <% } else { %> <% matches.forEach(match => { %>
   <div class="card bg-dark text-white mb-4 p-3 shadow-sm">
     <!-- Match Header -->
@@ -83,7 +87,15 @@
     <!-- Red Cards -->
     <% match.redCards.forEach(player => { %>
     <div class="text-danger ms-2">🟥 <%= player.name %></div>
-    <% }) %>
+    <% }) %> <% console.log('🧪 Opposition MOTM:', match.motmOpposition); %>
+
+    <!-- ✅ Opposition MOTM (show it even if no red cards exist) -->
+    <% if (match.motmOpposition) { %>
+    <p class="text-info mt-2">
+      🎖 Opposition MOTM: <strong><%= match.motmOpposition || 'None' %></strong>
+    </p>
+
+    <% } %>
 
     <!-- Admin Controls -->
     <% if (currentUser?.isAdmin) { %>

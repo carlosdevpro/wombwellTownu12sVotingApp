@@ -1,4 +1,7 @@
 <%- include('partials/header') %>
+<div class="d-flex justify-content-center mb-3">
+  <a href="/" class="btn btn-primary">🏠 Back to Home</a>
+</div>
 
 <div class="page-center">
   <div class="container">
@@ -222,6 +225,20 @@
         <input type="hidden" name="redCards" id="redCardsInput" />
         <input type="hidden" name="matchType" id="matchType" />
 
+        <div class="mb-3">
+          <label for="motmOpposition" class="form-label"
+            >🎖 Opposition MOTM</label
+          >
+          <select name="motmOpposition" id="motmOpposition" class="form-select">
+            <option value="">Select Player</option>
+            <% players.forEach(player => { %>
+            <option value="<%= player.firstName %> <%= player.lastName %>">
+              <%= player.firstName %> <%= player.lastName %>
+            </option>
+            <% }) %>
+          </select>
+        </div>
+
         <button type="submit" class="btn btn-primary w-100">
           ✅ End Match & Save
         </button>
@@ -263,11 +280,11 @@
       li.className =
         'list-group-item d-flex justify-content-between align-items-center';
       li.innerHTML = `
-          ${scorer.name} ${
+            ${scorer.name} ${
         scorer.assist ? '(Assisted by ' + scorer.assist + ')' : ''
       }
-          <button class="btn btn-sm btn-danger" onclick="removeScorer(${index})">❌</button>
-        `;
+            <button class="btn btn-sm btn-danger" onclick="removeScorer(${index})">❌</button>
+          `;
       list.appendChild(li);
     });
 
@@ -374,9 +391,9 @@
       li.className =
         'list-group-item d-flex justify-content-between align-items-center';
       li.innerHTML = `
-          ${card.name}
-          <button class="btn btn-sm btn-outline-danger" onclick="removeCard('${listId}', ${index})">❌</button>
-        `;
+            ${card.name}
+            <button class="btn btn-sm btn-outline-danger" onclick="removeCard('${listId}', ${index})">❌</button>
+          `;
       list.appendChild(li);
     });
 
@@ -393,7 +410,7 @@
     }
   }
 
-  // Make sure it's accessible everywhere
+  // ✅ Updated: No more input vanishing too early
   function checkAndHideInputs() {
     const homeInput = document.getElementById('homeTeam');
     const awayInput = document.getElementById('awayTeam');
@@ -405,15 +422,20 @@
     console.log('🏠 Home:', homeVal);
     console.log('🚌 Away:', awayVal);
 
-    if (homeVal && awayVal) {
-      console.log('✅ Both filled — hiding input wrapper');
-      wrapper.style.display = 'none';
-
+    if (homeVal) {
       document.getElementById('displayHomeTeam').textContent = homeVal;
-      document.getElementById('displayAwayTeam').textContent = awayVal;
-    } else {
-      console.log('⛔ Still waiting on both inputs...');
     }
+    if (awayVal) {
+      document.getElementById('displayAwayTeam').textContent = awayVal;
+    }
+    if (homeVal && awayVal) {
+      setTimeout(() => {
+        wrapper.style.setProperty('display', 'none', 'important');
+      }, 1000); // Optional delay
+    }
+
+    // 👇 Remove this part that was hiding inputs too early
+    // wrapper.style.setProperty('display', 'none', 'important');
   }
 
   function assignWombwell(position) {
@@ -496,33 +518,50 @@
   document.addEventListener('DOMContentLoaded', () => {
     const homeInput = document.getElementById('homeTeam');
     const awayInput = document.getElementById('awayTeam');
-    const wrapper = document.getElementById('teamInputsWrapper');
 
-    function checkAndHideInputs() {
+    function updateLiveScoreNames() {
       const homeVal = homeInput.value.trim();
       const awayVal = awayInput.value.trim();
 
-      console.log('🔥 Function hit');
       console.log('🏠 Home:', homeVal);
       console.log('🚌 Away:', awayVal);
 
-      if (homeVal && awayVal) {
-        console.log('✅ Both filled — hiding input wrapper');
-        wrapper.style.setProperty('display', 'none', 'important');
-
-        // Update the live scoreboard
+      // 👇 Only update scoreboard text — do not hide inputs
+      if (homeVal) {
         document.getElementById('displayHomeTeam').textContent = homeVal;
+      }
+
+      if (awayVal) {
         document.getElementById('displayAwayTeam').textContent = awayVal;
-      } else {
-        console.log('⛔ Still waiting on both inputs...');
       }
     }
 
-    homeInput.addEventListener('input', checkAndHideInputs);
-    awayInput.addEventListener('input', checkAndHideInputs);
+    document.addEventListener('click', (e) => {
+      const homeVal = document.getElementById('homeTeam').value.trim();
+      const awayVal = document.getElementById('awayTeam').value.trim();
+      const wrapper = document.getElementById('teamInputsWrapper');
 
-    // Run once immediately on load
-    checkAndHideInputs();
+      // Do nothing if you're still typing
+      const clickedInsideInputs =
+        e.target.closest('#teamInputsWrapper') ||
+        e.target.id === 'homeTeam' ||
+        e.target.id === 'awayTeam';
+
+      if (clickedInsideInputs) return;
+
+      // ✅ If both fields are filled and click was outside, hide the wrapper
+      if (homeVal && awayVal) {
+        wrapper.style.setProperty('display', 'none', 'important');
+        console.log('🎯 Inputs filled — hiding after click');
+      }
+    });
+
+    // Listen for changes and update names in scoreboard
+    homeInput.addEventListener('input', updateLiveScoreNames);
+    awayInput.addEventListener('input', updateLiveScoreNames);
+
+    // Run once on load in case values are pre-filled
+    updateLiveScoreNames();
   });
 </script>
 

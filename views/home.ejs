@@ -26,26 +26,14 @@
       <div class="d-grid gap-2 mt-4" style="max-width: 400px; margin: 0 auto">
         <% if (user?.isPlayer) { %>
         <a href="/stats" class="btn btn-neon-sm">📊 Player Stats</a>
-        <a href="/leaderboard" class="btn btn-neon-sm">🏅 Vote Leaderboard</a>
         <a href="/matches" class="btn btn-neon-sm">📅 Match Results</a>
         <% } else { %>
         <a href="/vote" class="btn btn-neon-sm">⚽ Vote for Man of the Match</a>
         <a href="/stats" class="btn btn-neon-sm">📊 Player Stats</a>
-        <a href="/leaderboard" class="btn btn-neon-sm">🏅 Vote Leaderboard</a>
         <a href="/matches" class="btn btn-neon-sm">📅 Match Results</a>
+        <a href="/admin" class="btn btn-warning">🛠 Admin Dashboard</a>
         <% } %>
       </div>
-
-      <!-- Admin Buttons -->
-      <% if (user.isAdmin) { %>
-      <hr />
-      <div class="d-grid gap-2">
-        <a href="/admin" class="btn btn-outline-warning">🛠 Admin Dashboard</a>
-        <a href="/admin/stats-edit" class="btn btn-outline-warning"
-          >✏️ Edit Player Stats</a
-        >
-      </div>
-      <% } %>
 
       <!-- Logout Button -->
       <hr />
