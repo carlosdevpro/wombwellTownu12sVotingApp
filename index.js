@@ -654,6 +654,7 @@ app.get('/matches', async (req, res) => {
 });
 
 // ✅ DELETE route for a single match
+// ✅ DELETE route for a single match
 app.delete(
   '/admin/matches/:id',
   requireLogin,
@@ -661,76 +662,105 @@ app.delete(
   async (req, res) => {
     try {
       const match = await Match.findById(req.params.id);
-
       if (!match) {
         req.flash('error', 'Match not found.');
         return res.redirect('/matches');
       }
 
-      // ✅ Combine scorers
+      // ✅ Combine scorers for stat reversal
       const allScorers = [
         ...(match.firstHalfScorers || []),
         ...(match.secondHalfScorers || []),
       ];
 
       for (const s of allScorers) {
-        const player = await Player.findOne({ fullName: s.name });
+        const player = await Player.findOne({
+          $expr: {
+            $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, s.name],
+          },
+        });
         if (player) {
-          player.goals = Math.max(0, player.goals - 1);
-          if (s.assist) {
-            const assister = await Player.findOne({ fullName: s.assist });
-            if (assister) {
-              assister.assists = Math.max(0, assister.assists - 1);
-              await assister.save();
-            }
+          player.goals = Math.max((player.goals || 0) - 1, 0);
+          await player.save();
+        }
+
+        if (s.assist) {
+          const assister = await Player.findOne({
+            $expr: {
+              $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, s.assist],
+            },
+          });
+          if (assister) {
+            assister.assists = Math.max((assister.assists || 0) - 1, 0);
+            await assister.save();
           }
-          await player.save();
         }
       }
 
-      // ✅ Yellow cards
-      for (const y of match.yellowCards || []) {
-        const player = await Player.findOne({ fullName: y.name });
+      // ✅ Revert yellow cards
+      for (const yc of match.yellowCards || []) {
+        const player = await Player.findOne({
+          $expr: {
+            $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, yc.name],
+          },
+        });
         if (player) {
-          player.yellowCards = Math.max(0, player.yellowCards - 1);
+          player.yellowCards = Math.max((player.yellowCards || 0) - 1, 0);
           await player.save();
         }
       }
 
-      // ✅ Red cards
-      for (const r of match.redCards || []) {
-        const player = await Player.findOne({ fullName: r.name });
+      // ✅ Revert red cards
+      for (const rc of match.redCards || []) {
+        const player = await Player.findOne({
+          $expr: {
+            $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, rc.name],
+          },
+        });
         if (player) {
-          player.redCards = Math.max(0, player.redCards - 1);
+          player.redCards = Math.max((player.redCards || 0) - 1, 0);
           await player.save();
         }
       }
 
-      // ✅ Opposition MOTM
+      // ✅ Revert Opposition MOTM
       if (match.motmOpposition) {
-        const player = await Player.findOne({ fullName: match.motmOpposition });
+        const player = await Player.findOne({
+          $expr: {
+            $eq: [
+              { $concat: ['$firstName', ' ', '$lastName'] },
+              match.motmOpposition,
+            ],
+          },
+        });
         if (player) {
-          player.motmOpposition = Math.max(0, player.motmOpposition - 1);
+          player.motmOpposition = Math.max((player.motmOpposition || 0) - 1, 0);
           await player.save();
         }
       }
 
-      // ✅ Parent MOTM
+      // ✅ Revert Parent MOTM
       if (match.parentMotm) {
-        const player = await Player.findOne({ fullName: match.parentMotm });
+        const player = await Player.findOne({
+          $expr: {
+            $eq: [
+              { $concat: ['$firstName', ' ', '$lastName'] },
+              match.parentMotm,
+            ],
+          },
+        });
         if (player) {
-          player.parentMotmWins = Math.max(0, player.parentMotmWins - 1);
+          player.parentMotmWins = Math.max((player.parentMotmWins || 0) - 1, 0);
           await player.save();
         }
       }
 
-      // ✅ Delete match record
+      // ✅ Finally delete the match
       await Match.findByIdAndDelete(req.params.id);
-
-      req.flash('success', 'Match and all associated stats deleted.');
+      req.flash('success', '✅ Match and all related stats deleted!');
       res.redirect('/matches');
     } catch (err) {
-      console.error('❌ Failed to delete match and rollback stats:', err);
+      console.error('❌ Error deleting match and stats:', err);
       req.flash('error', 'Something went wrong while deleting the match.');
       res.redirect('/matches');
     }
