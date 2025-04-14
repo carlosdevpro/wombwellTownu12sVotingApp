@@ -7,6 +7,8 @@
   </div>
 
   <div class="row justify-content-center mb-4">
+
+    <% if (topGoals.length > 0) { %>
     <div class="col-md-4 mb-3">
       <div class="card bg-dark text-white shadow-sm">
         <div class="card-header text-center fw-bold">🥇 Top Goal Scorers</div>
@@ -14,13 +16,15 @@
           <% topGoals.forEach((p, idx) => { %>
           <li class="list-group-item d-flex justify-content-between">
             <span>⚽<%= p.firstName %> <%= p.lastName %></span>
-            <span><%= p.goals %> </span>
+            <span><%= p.goals %></span>
           </li>
           <% }) %>
         </ul>
       </div>
     </div>
+    <% } %>
   
+    <% if (topAssists.length > 0) { %>
     <div class="col-md-4 mb-3">
       <div class="card bg-dark text-white shadow-sm">
         <div class="card-header text-center fw-bold">🎯 Top Assisters</div>
@@ -34,25 +38,26 @@
         </ul>
       </div>
     </div>
+    <% } %>
+  
   </div>
   
-
-    <!-- Combined Man of the Match -->
-    <% if (combinedMotm && combinedMotm.length > 0) { %>
-    <div class="card mb-4">
-      <div class="card-header text-center fw-bold bg-success text-white">
-        🏆 Combined Man of the Match Leaders
-      </div>
-      <ul class="list-group list-group-flush">
-        <% combinedMotm.forEach((p, i) => { %>
-        <li class="list-group-item d-flex justify-content-between">
-          <span><%= i + 1 %>. <%= p.firstName %> <%= p.lastName %></span>
-          <span>🏅 <%= p.totalMotm %> awards</span>
-        </li>
-        <% }) %>
-      </ul>
+  <% if (combinedMotm.length > 0) { %>
+  <div class="card mb-4">
+    <div class="card-header text-center fw-bold bg-success text-white">
+      🏆 Combined Man of the Match Leaders
     </div>
-    <% } %>
+    <ul class="list-group list-group-flush">
+      <% combinedMotm.forEach((p, i) => { %>
+      <li class="list-group-item d-flex justify-content-between">
+        <span><%= i + 1 %>. <%= p.firstName %> <%= p.lastName %></span>
+        <span>🏅 <%= p.totalMotm %> awards</span>
+      </li>
+      <% }) %>
+    </ul>
+  </div>
+  <% } %>
+  
 
     <!-- Full Stats Leaderboard -->
     <div class="table-responsive">
