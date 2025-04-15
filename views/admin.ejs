@@ -14,19 +14,35 @@
       <% } %>
 
       <div class="d-grid gap-2" style="max-width: 300px; margin: 0 auto">
-        <a href="/" class="btn btn-primary">🏠 Back to Home</a>
+        <a href="/" class="btn btn-primary w-100">🏠 Back to Home</a>
 
-        <form action="/admin/send-reminders" method="POST">
-          <button type="submit" class="btn btn-warning text-black">
+        <form action="/admin/send-reminders" method="POST" class="d-grid">
+          <button type="submit" class="btn btn-warning text-black w-100">
             📱 Send SMS Vote Reminders
           </button>
         </form>
 
-        <a href="/admin/live-match" class="btn btn-outline-success">
+        <form method="POST" action="/admin/submit-parent-motm" class="d-grid">
+          <button class="btn btn-danger w-100">📣 Reveal winner of MOTM</button>
+        </form>
+
+        <button
+          class="btn btn-outline-warning w-100"
+          data-bs-toggle="modal"
+          data-bs-target="#resetParentVotesModal"
+        >
+          🔁 Reset Parent Votes
+        </button>
+
+        <a href="/admin/live-match" class="btn btn-outline-success w-100">
           📡 Start Live Match
         </a>
 
-        <a href="/matches" class="btn btn-info mb-3">📅 Match Results</a>
+        <a href="/matches" class="btn btn-info w-100">📅 Match Results</a>
+
+        <a href="/admin/players/new" class="btn btn-success w-100 mb-3">
+          ➕ Add New Player
+        </a>
       </div>
 
       <!-- Registered Parents -->
@@ -200,6 +216,43 @@
     namePlaceholder.textContent = playerName;
   });
 </script>
+
+<!-- Reset Parent Votes Modal -->
+<div
+  class="modal fade"
+  id="resetParentVotesModal"
+  tabindex="-1"
+  aria-labelledby="resetParentVotesModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title" id="resetParentVotesModalLabel">
+          ⚠️ Confirm Vote Reset
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body text-center">
+        <p>Are you sure you want to reset all parent votes?</p>
+        <p>This will allow all parents to vote again.</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <form action="/admin/reset-parent-votes" method="POST">
+          <button type="submit" class="btn btn-warning">Yes, Reset</button>
+        </form>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <%- include('partials/footer') %>
 

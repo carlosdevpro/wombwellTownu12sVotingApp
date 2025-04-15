@@ -2,6 +2,37 @@
 
 <div class="page-center">
   <div class="container">
+    <% if (voteLeaderboard && voteLeaderboard.length > 0) { %>
+    <div class="card shadow p-4 mb-4">
+      <h2 class="text-center mb-3">🗳️ Voting In Progress</h2>
+      <div class="table-responsive">
+        <table
+          class="table table-bordered table-hover text-center align-middle"
+        >
+          <thead class="table-dark">
+            <tr>
+              <th>Rank</th>
+              <th>Full Name</th>
+              <th>Position</th>
+              <th>Votes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% voteLeaderboard.forEach((player, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= player.firstName %> <%= player.lastName %></td>
+              <td><%= player.position %></td>
+              <td><%= player.motmVotes %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Existing MOTM Leaderboard -->
     <div class="card shadow p-4">
       <h2 class="text-center mb-4">🏅 Leaderboard – Man of the Match Votes</h2>
 
@@ -16,7 +47,6 @@
               <th>Position</th>
               <th>O🎖️</th>
               <th>P🏅</th>
-              <th>Total MOTM</th>
             </tr>
           </thead>
           <tbody>
@@ -27,7 +57,6 @@
               <td><%= player.position %></td>
               <td><%= player.motmOpposition || 0 %></td>
               <td><%= player.parentMotmWins || 0 %></td>
-              <td><%= player.totalMotm || 0 %></td>
             </tr>
             <% }) %>
           </tbody>

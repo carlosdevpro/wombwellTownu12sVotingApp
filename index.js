@@ -314,7 +314,9 @@ app.post('/vote', requireLogin, async (req, res) => {
     }
 
     // Record vote
-    await Player.findByIdAndUpdate(req.body.playerId, { $inc: { votes: 1 } });
+    await Player.findByIdAndUpdate(req.body.playerId, {
+      $inc: { motmVotes: 1 },
+    });
     user.hasVoted = true;
     await user.save();
 
@@ -350,7 +352,6 @@ app.post('/admin/reset-votes', requireLogin, requireAdmin, async (req, res) => {
 });
 
 // Leaderboards
-// ✅ Updated /leaderboard to show combined MOTM totals
 app.get('/leaderboard', async (req, res) => {
   let players = await Player.aggregate([
     {
@@ -365,18 +366,21 @@ app.get('/leaderboard', async (req, res) => {
   );
 
   if (allZero) {
-    // Sort alphabetically by full name
     players.sort((a, b) =>
       (a.firstName + ' ' + a.lastName).localeCompare(
         b.firstName + ' ' + b.lastName
       )
     );
   } else {
-    // Sort by total MOTM
     players.sort((a, b) => b.totalMotm - a.totalMotm);
   }
 
-  res.render('leaderboard', { players });
+  // ⏳ Voting leaderboard (live votes)
+  const voteLeaderboard = await Player.find({ motmVotes: { $gt: 0 } }).sort({
+    motmVotes: -1,
+  });
+
+  res.render('leaderboard', { players, voteLeaderboard });
 });
 
 // GET /stats
@@ -1120,6 +1124,113 @@ app.get('/admin/secret-tools', requireLogin, async (req, res) => {
   }
   res.render('adminSecretTools');
 });
+
+// Add new player
+app.get('/admin/players/new', requireLogin, requireAdmin, (req, res) => {
+  res.render('adminAddPlayer', { messages: req.flash() });
+});
+
+app.post('/admin/players/add', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const { firstName, lastName, shirtNumber, position } = req.body;
+
+    const existing = await Player.findOne({ firstName, lastName, shirtNumber });
+    if (existing) {
+      req.flash('error', 'Player already exists.');
+      return res.redirect('/admin/players/new');
+    }
+
+    const player = new Player({
+      firstName,
+      lastName,
+      shirtNumber,
+      position,
+    });
+
+    await player.save();
+
+    req.flash('success', `${firstName} ${lastName} added to the squad!`);
+    res.redirect('/admin/players/new');
+  } catch (err) {
+    console.error('❌ Failed to add player:', err);
+    req.flash('error', 'Something went wrong adding the player.');
+    res.redirect('/admin/players/new');
+  }
+});
+
+// SUBMIT PARENTS VOTES FOR MOTM WINNER
+app.post(
+  '/admin/submit-parent-motm',
+  requireLogin,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const match = await Match.findOne({
+        date: { $gte: todayStart, $lte: todayEnd },
+      }).sort({ date: -1 });
+
+      if (!match) {
+        req.flash('error', '❌ No match found for today.');
+        return res.redirect('/admin');
+      }
+
+      // ✅ Only consider players with >0 votes
+      const topPlayer = await Player.findOne({ motmVotes: { $gt: 0 } }).sort({
+        motmVotes: -1,
+      });
+
+      if (!topPlayer) {
+        req.flash('error', '❌ No votes to submit.');
+        return res.redirect('/admin');
+      }
+
+      match.parentMotm = `${topPlayer.firstName} ${topPlayer.lastName}`;
+      await match.save();
+
+      topPlayer.parentMotmWins += 1;
+      await topPlayer.save();
+
+      await Player.updateMany({}, { $set: { motmVotes: 0 } });
+      await User.updateMany({ isParent: true }, { $set: { hasVoted: false } });
+
+      req.flash(
+        'success',
+        `✅ ${topPlayer.firstName} ${topPlayer.lastName} submitted as Parents' MOTM.`
+      );
+      res.redirect('/admin');
+    } catch (err) {
+      console.error('❌ Error submitting parent MOTM:', err);
+      req.flash('error', 'Something went wrong submitting the votes.');
+      res.redirect('/admin');
+    }
+  }
+);
+
+// Reset parent votes
+app.post(
+  '/admin/reset-parent-votes',
+  requireLogin,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      await Player.updateMany({}, { $set: { motmVotes: 0 } });
+      await User.updateMany({ isParent: true }, { $set: { hasVoted: false } });
+
+      req.flash('success', '✅ All parent votes have been reset.');
+    } catch (err) {
+      console.error('❌ Failed to reset parent votes:', err);
+      req.flash('error', 'Something went wrong resetting parent votes.');
+    }
+
+    res.redirect('/admin');
+  }
+);
 
 // Start server
 app.listen(3000, () => {

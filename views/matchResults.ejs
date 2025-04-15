@@ -95,6 +95,10 @@
       🎖 Opposition MOTM: <strong><%= match.motmOpposition || 'None' %></strong>
     </p>
 
+    <% } %> <% if (match.parentMotm) { %>
+    <p class="text-success">
+      👪 Parents' MOTM: <strong><%= match.parentMotm %></strong>
+    </p>
     <% } %>
 
     <!-- Admin Controls -->

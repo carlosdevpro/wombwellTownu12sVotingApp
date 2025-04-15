@@ -27,7 +27,7 @@ const matchSchema = new mongoose.Schema({
   redCards: [cardSchema],
 
   // NEW fields for Man of the Match
-  parentMOTM: { type: String, default: '' },
+  parentMotm: { type: String, default: '' },
   motmOpposition: { type: String, default: '' },
 });
 
