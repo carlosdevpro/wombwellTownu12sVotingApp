@@ -1232,6 +1232,23 @@ app.post(
   }
 );
 
+app.get('/admin/users', requireLogin, requireAdmin, async (req, res) => {
+  try {
+    const parents = await User.find({ isParent: true }).populate(
+      'linkedPlayer'
+    );
+    const players = await User.find({ isPlayer: true }).populate(
+      'linkedPlayer'
+    );
+
+    res.render('adminUsers', { parents, players, messages: req.flash() });
+  } catch (err) {
+    console.error('❌ Failed to load users:', err);
+    req.flash('error', 'Failed to load registered users.');
+    res.redirect('/admin');
+  }
+});
+
 // Start server
 app.listen(3000, () => {
   console.log('SERVING YOUR APP ON PORT 3000');
