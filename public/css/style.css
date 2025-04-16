@@ -217,3 +217,28 @@ a:hover,
 .table {
   font-size: 0.95rem;
 }
+
+.brand-typewriter {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.3rem;
+  color: #00ccff;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2px solid rgba(255, 255, 255, 0.75);
+  animation: typing 2s steps(20, end), blink 0.8s step-end infinite;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 160px;
+  } /* Adjust based on text width */
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
