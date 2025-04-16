@@ -5,6 +5,29 @@ body {
   padding-top: 80px;
 }
 
+h1,
+h2 {
+  background-color: black;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  display: inline-block;
+  margin: 0 auto 20px auto; /* Top: 0, Horizontal: auto, Bottom: 20px */
+  text-align: center;
+}
+
+.transparent-box {
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 12px;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px); /* for Safari */
+}
+
+/* .page-center h2 {
+  margin: 0 auto;
+} */
+
 a,
 .nav-link {
   color: #00bfff;
@@ -67,8 +90,10 @@ a:hover,
 
 /* Galaxy Login Page Styles */
 body {
-  background: url('../images/galaxy-bg.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* background: url('../images/realmadrid.jpeg') center center fixed; */
+  background: url('../images/barcabadge.jpeg') center center fixed;
+
+  background-size: contain;
 }
 
 .login-card {

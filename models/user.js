@@ -61,6 +61,10 @@ const userSchema = new mongoose.Schema({
   lastActive: {
     type: Date,
   },
+  votedFor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Player',
+  },
 });
 
 // Login helper

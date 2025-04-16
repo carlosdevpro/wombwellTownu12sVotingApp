@@ -320,6 +320,16 @@ app.post('/vote', requireLogin, async (req, res) => {
     user.hasVoted = true;
     await user.save();
 
+    const votedPlayer = await Player.findById(req.body.playerId);
+    if (!votedPlayer) {
+      req.flash('error', 'Player not found.');
+      return res.redirect('/vote');
+    }
+
+    user.hasVoted = true;
+    user.votedFor = votedPlayer._id;
+    await user.save();
+
     // Show only success
     req.flash('success', '✅ Your vote has been submitted.');
     return res.redirect('/vote');
@@ -549,7 +559,6 @@ app.post('/logout', async (req, res) => {
   res.redirect('/login');
 });
 
-// Admin: Send SMS Vote Reminders to ALL Parents
 // Admin: Send SMS to Individual Parent
 app.post(
   '/admin/send-reminder/:id',
@@ -1026,13 +1035,12 @@ app.post('/admin/live-match/end', async (req, res) => {
     });
 
     await match.save();
-    console.log('🧪 Submitted MOTM:', motmOpposition);
 
-    // ✅ Update stats for scorers and assisters
     const allScorers = [
       ...JSON.parse(firstHalfScorers),
       ...JSON.parse(secondHalfScorers),
     ];
+
     for (const scorer of allScorers) {
       const player = await Player.findOne({
         $expr: {
@@ -1057,7 +1065,33 @@ app.post('/admin/live-match/end', async (req, res) => {
       }
     }
 
-    // ✅ Update stat for Opposition MOTM
+    // ✅ Update Yellow Cards
+    for (const yellow of JSON.parse(yellowCards)) {
+      const player = await Player.findOne({
+        $expr: {
+          $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, yellow.name],
+        },
+      });
+      if (player) {
+        player.yellowCards += 1;
+        await player.save();
+      }
+    }
+
+    // ✅ Update Red Cards
+    for (const red of JSON.parse(redCards)) {
+      const player = await Player.findOne({
+        $expr: {
+          $eq: [{ $concat: ['$firstName', ' ', '$lastName'] }, red.name],
+        },
+      });
+      if (player) {
+        player.redCards += 1;
+        await player.save();
+      }
+    }
+
+    // ✅ Update Opposition MOTM
     if (motmOpposition) {
       const player = await Player.findOneAndUpdate(
         {
@@ -1069,21 +1103,18 @@ app.post('/admin/live-match/end', async (req, res) => {
           },
         },
         { $inc: { motmOpposition: 1 } },
-        { new: true } // 👈 Return the updated document
+        { new: true }
       );
-
       if (player) {
         console.log(
           '✅ Updated Opposition MOTM:',
           player.firstName,
           player.lastName
         );
-      } else {
-        console.log('❌ Opposition MOTM not found:', motmOpposition);
       }
     }
 
-    // ✅ Update stat for Parent MOTM
+    // ✅ Update Parent MOTM
     if (parentMotm) {
       const player = await Player.findOneAndUpdate(
         {
@@ -1092,21 +1123,18 @@ app.post('/admin/live-match/end', async (req, res) => {
           },
         },
         { $inc: { parentMotmWins: 1 } },
-        { new: true } // 👈 Return the updated document
+        { new: true }
       );
-
       if (player) {
         console.log(
           '✅ Updated Parent MOTM:',
           player.firstName,
           player.lastName
         );
-      } else {
-        console.log('❌ Parent MOTM not found:', parentMotm);
       }
     }
 
-    req.flash('success', '✅ Match saved successfully!');
+    req.flash('success', '✅ Match saved and stats updated.');
     res.redirect('/matches');
   } catch (err) {
     console.error('❌ Error saving match:', err);
@@ -1115,14 +1143,21 @@ app.post('/admin/live-match/end', async (req, res) => {
   }
 });
 
-// // Only show this page for your user account
+// ✅ Only show this page for your user account
 app.get('/admin/secret-tools', requireLogin, async (req, res) => {
   const user = await User.findById(req.session.user_id);
   if (!user || !user.isAdmin || user.email !== 'carlos.wood1@icloud.com') {
     req.flash('error', 'Access denied.');
     return res.redirect('/');
   }
-  res.render('adminSecretTools');
+
+  // ✅ Fetch voters
+  const voters = await User.find({ isParent: true, hasVoted: true }).populate(
+    'votedFor linkedPlayer'
+  );
+
+  // ✅ Render with voters data
+  res.render('adminSecretTools', { voters });
 });
 
 // Add new player
@@ -1180,29 +1215,41 @@ app.post(
         return res.redirect('/admin');
       }
 
-      // ✅ Only consider players with >0 votes
-      const topPlayer = await Player.findOne({ motmVotes: { $gt: 0 } }).sort({
+      const votedPlayers = await Player.find({ motmVotes: { $gt: 0 } }).sort({
         motmVotes: -1,
       });
 
-      if (!topPlayer) {
+      if (!votedPlayers.length) {
         req.flash('error', '❌ No votes to submit.');
         return res.redirect('/admin');
       }
 
-      match.parentMotm = `${topPlayer.firstName} ${topPlayer.lastName}`;
+      const highestVotes = votedPlayers[0].motmVotes;
+      const topPlayers = votedPlayers.filter(
+        (p) => p.motmVotes === highestVotes
+      );
+
+      const winnerNames = topPlayers.map((p) => `${p.firstName} ${p.lastName}`);
+
+      // Add (Joint Winners) if there's a tie
+      const formattedWinnerText =
+        winnerNames.length > 1
+          ? `${winnerNames.join(', ')} (Joint Winners)`
+          : winnerNames[0];
+
+      // Save to match
+      match.parentMotm = formattedWinnerText;
       await match.save();
 
-      topPlayer.parentMotmWins += 1;
-      await topPlayer.save();
+      for (const p of topPlayers) {
+        p.parentMotmWins += 1;
+        await p.save();
+      }
 
       await Player.updateMany({}, { $set: { motmVotes: 0 } });
       await User.updateMany({ isParent: true }, { $set: { hasVoted: false } });
 
-      req.flash(
-        'success',
-        `✅ ${topPlayer.firstName} ${topPlayer.lastName} submitted as Parents' MOTM.`
-      );
+      req.flash('success', `✅ Parents' MOTM: ${formattedWinnerText}`);
       res.redirect('/admin');
     } catch (err) {
       console.error('❌ Error submitting parent MOTM:', err);
@@ -1234,12 +1281,13 @@ app.post(
 
 app.get('/admin/users', requireLogin, requireAdmin, async (req, res) => {
   try {
-    const parents = await User.find({ isParent: true }).populate(
-      'linkedPlayer'
-    );
-    const players = await User.find({ isPlayer: true }).populate(
-      'linkedPlayer'
-    );
+    const parents = await User.find({ isParent: true })
+      .populate('linkedPlayer')
+      .sort({ lastName: 1 });
+
+    const players = await User.find({ isPlayer: true })
+      .populate('linkedPlayer')
+      .sort({ lastName: 1 });
 
     res.render('adminUsers', { parents, players, messages: req.flash() });
   } catch (err) {
