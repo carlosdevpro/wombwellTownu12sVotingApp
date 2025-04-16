@@ -17,6 +17,28 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/style.css" />
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const images = [
+          '/images/barcabadge.jpeg',
+          '/images/barcaground.jpg',
+          '/images/barnsleylogo.jpeg',
+          '/images/dortmund.jpeg',
+          '/images/footballbg.jpg',
+          '/images/intermiami.jpeg',
+          '/images/manutdlogo.jpeg',
+          '/images/manutdplayers.jpg',
+          '/images/realmadrid.jpeg',
+          '/images/realmadridground.jpeg',
+        ];
+
+        const randomImage = images[Math.floor(Math.random() * images.length)];
+
+        document.body.style.background = `url('${randomImage}')  center center fixed`;
+        document.body.style.backgroundSize = 'contain';
+      });
+    </script>
   </head>
   <body>
     <!-- 🔷 Navbar Include -->

@@ -24,9 +24,15 @@ h2 {
   -webkit-backdrop-filter: blur(3px); /* for Safari */
 }
 
-/* .page-center h2 {
-  margin: 0 auto;
-} */
+.page-title {
+  background-color: black;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-align: center;
+  display: inline-block;
+  margin: 0 auto 1rem;
+}
 
 a,
 .nav-link {
@@ -86,14 +92,6 @@ a:hover,
 
 .card:hover {
   transform: scale(1.02);
-}
-
-/* Galaxy Login Page Styles */
-body {
-  /* background: url('../images/realmadrid.jpeg') center center fixed; */
-  background: url('../images/barcabadge.jpeg') center center fixed;
-
-  background-size: contain;
 }
 
 .login-card {
