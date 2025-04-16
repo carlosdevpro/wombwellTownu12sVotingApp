@@ -32,8 +32,10 @@
           >
           <a href="/stats" class="btn btn-neon-sm">📊 Player Stats</a>
           <a href="/matches" class="btn btn-neon-sm">📅 Match Results</a>
+
+          <% if (user.isAdmin) { %>
           <a href="/admin" class="btn btn-warning">🛠 Admin Dashboard</a>
-          <% } %>
+          <% } %> <% } %>
         </div>
 
         <!-- Logout Button -->
